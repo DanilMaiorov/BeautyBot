@@ -1,4 +1,5 @@
-﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
+﻿using BeautyBot.src.BeautyBot.Core.Enums;
+using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -13,5 +14,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
     {
         Task<IReadOnlyList<Appointment>> GetAllAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<IReadOnlyList<Appointment>> GetActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
+        Task<Appointment?> GetAppointment(Guid appointmentId, CancellationToken ct);
+        Task UpdateAppointment(Appointment appointment, CancellationToken ct);
     }
 }

@@ -3,7 +3,7 @@
     /// <summary>
     /// Список статусов записи
     /// </summary>
-    public enum AppointmentStatus
+    public enum AppointmentState
     {
         Active,
         Completed,

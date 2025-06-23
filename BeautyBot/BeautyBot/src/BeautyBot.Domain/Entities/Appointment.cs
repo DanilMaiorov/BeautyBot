@@ -11,15 +11,17 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime StateChangedAt { get; set; }
         public DateTime AppointmentTime { get; set; }
-        public AppointmentStatus Status { get; set; } // Active, Completed, Cancelled
+        public AppointmentState State { get; set; } // Active, Completed, Cancelled
 
         public Appointment(Guid userId, IProcedure procedure, DateTime appointmentTime)
         {
             Id = Guid.NewGuid();
             UserId = userId;
             Procedure = procedure;
+            CreatedAt = DateTime.Now;
+            StateChangedAt = DateTime.Now; 
             AppointmentTime = appointmentTime;
-            Status = AppointmentStatus.Active;
+            State = AppointmentState.Active;
         }
     }
 }

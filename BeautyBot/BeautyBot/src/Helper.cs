@@ -34,7 +34,8 @@ namespace BeautyBot.src
                 { Command.Start, "Начало работы с ботом, регистрация" },
                 { Command.Help, "Помощь по командам" },
                 { Command.Info, "Информация о боте" },
-                { Command.AddAppointment, "Записать на процедуру" },
+                //{ Command.AddAppointment, "Записаться на процедуру" },
+                { Command.Add, "Записаться на процедуру" },
                 { Command.ShowActiveAppointments, "Показать активные записи" },
                 { Command.ShowAllAppointments, "Показать все записи" },
                 { Command.CancelAppointment, "Отменить запись" },
@@ -82,7 +83,7 @@ namespace BeautyBot.src
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
-            if (input.StartsWith("/add") || input.StartsWith("/removetask") || input.StartsWith("/completetask") || input.StartsWith("/find"))
+            if (input.StartsWith("/add") || input.StartsWith("/removetask") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
             {
                 if (input.StartsWith("/add "))
                 {
@@ -94,14 +95,14 @@ namespace BeautyBot.src
                 //    cutInput = input.Substring(6);
                 //    input = "/find";
                 //}
-                //else if (input.StartsWith("/removetask ") || input.StartsWith("/completetask "))
-                //{
-                //    //верну данные кортежем
-                //    (string command, Guid taskGuid) inputData = Validate.ValidateTask(input, taskGuid, currentUserTaskList);
+                else if (input.StartsWith("/removetask ") || input.StartsWith("/updateappointment "))
+                {
+                    //верну данные кортежем
+                    (string command, Guid taskGuid) inputData = Validate(input, taskGuid, currentUserAppointmentsList);
 
-                //    input = inputData.command;
-                //    taskGuid = inputData.taskGuid;
-                //}
+                    input = inputData.command;
+                    taskGuid = inputData.taskGuid;
+                }
                 else
                 {
                     input = "unregistered user command";
@@ -130,11 +131,44 @@ namespace BeautyBot.src
             foreach (Appointment appointment in appointments)
             {
                 appointmentCounter++;
-                await botClient.SendMessage(chat, $"{appointmentCounter}) ({appointment.Status}) {appointment.Procedure.Name} - {appointment.CreatedAt}", ct);
+                await botClient.SendMessage(chat, $"{appointmentCounter}) ({appointment.State}) {appointment.Procedure.Name} - {appointment.CreatedAt}", ct);
 
                 //тут надо попробовать выводить запись вместе с кнопками разными сообщениями
                 //await botClient.SendMessage(chat, $"\n{appointment.Id}", ct);
             }
+        }
+
+
+
+        // метод валидации задачи
+        public static (string, Guid) Validate(string input, Guid taskGuid, IReadOnlyList<Appointment> appointmentsList)
+        {
+            //сохраню исходный ввод пользака
+            string startInput = input;
+
+            if (input.StartsWith("/removetask "))
+            {
+                input = "/removetask";
+            }
+            else
+            {
+                input = "/updateappointment";
+            }
+
+            if (appointmentsList.Count != 0)
+            {
+                if (!Guid.TryParse(startInput.Substring(input.Length), out taskGuid))
+                {
+                    throw new ArgumentException($"Введён некорректный номер записи.\n");
+                }
+
+                if (appointmentsList.FirstOrDefault(x => x.Id == taskGuid) == null)
+                {
+                    throw new ArgumentException($"Введён некорректный номер записи.\n");
+                }
+                return (input, taskGuid);
+            }
+            return (input, taskGuid);
         }
     }
 }

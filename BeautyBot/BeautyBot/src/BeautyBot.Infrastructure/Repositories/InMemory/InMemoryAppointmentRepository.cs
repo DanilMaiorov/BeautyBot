@@ -18,9 +18,6 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         //public void Update(Appointment entity) { /* ... */ }
         //public void Delete(Guid id) { _appointments.RemoveAll(a => a.Id == id); }
 
-
-
-
         public async Task Add(Appointment entity, CancellationToken ct)
         {
             _appointments.Add(entity);
@@ -40,8 +37,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             return result;
         }        
 
-
-        public async Task<IReadOnlyList<Appointment>> GetActiveAppointmentsByUserId(Guid userId)
+        public async Task<IReadOnlyList<Appointment>> GetActiveAppointmentsByUserId(Guid userId, CancellationToken ct)
         {
             if (userId == Guid.Empty)
             {
@@ -49,7 +45,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             }
 
             var result = _appointments
-                .Where(x => x.UserId == userId && x.Status == AppointmentStatus.Active)
+                .Where(x => x.UserId == userId && x.State == AppointmentState.Active)
                 .ToList()
                 .AsReadOnly();
 
@@ -57,6 +53,33 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             await Task.Delay(1);
 
             return result;
+        }
+
+        public async Task<Appointment?> GetAppointment(Guid appointmentId, CancellationToken ct)
+        {
+            var item = _appointments.FirstOrDefault(x => x.Id == appointmentId);
+
+            //сделаю искусственную задержку для асинхронности
+            await Task.Delay(1, ct);
+
+            return item;
+        }
+
+        public async Task UpdateAppointment(Appointment appointment, CancellationToken ct)
+        {
+            var updateIndex = _appointments.FindIndex(x => x.Id == appointment.Id);
+
+            if (updateIndex != -1)
+            {
+                _appointments[updateIndex] = appointment;
+
+                //сделаю искусственную задержку для асинхронности
+                await Task.Delay(1, ct);
+            }
+            else
+            {
+                throw new KeyNotFoundException($"Запись с номером {appointment.Id} не найдена");
+            }
         }
     }
 }

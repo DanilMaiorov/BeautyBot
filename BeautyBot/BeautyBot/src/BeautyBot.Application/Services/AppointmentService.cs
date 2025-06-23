@@ -21,15 +21,9 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         public async Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateTime appointmentTime, CancellationToken ct)
         {
             //var tasks = await GetAllByUserId(user.UserId, ct);
-
             //if (tasks.Count >= maxTaskAmount)
-            //{
             //    throw new TaskCountLimitException(maxTaskAmount);
-            //}
-
             //string newTask = Validate.ValidateString(name, maxTaskLength);
-            //
-
             //написать метод проверки дубликатов добавленных записей
             //Helper.CheckDuplicate(newTask, tasks);
 
@@ -45,13 +39,21 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             return await _appointmentRepository.GetAllAppointmentsByUserId(userId, ct);
         }
 
-
-        public Task<IReadOnlyList<Appointment>> GetUserActiveAppointmentsByUserId(Guid userId, CancellationToken ct)
+        public async Task<IReadOnlyList<Appointment>> GetUserActiveAppointmentsByUserId(Guid userId, CancellationToken ct)
         {
             return await _appointmentRepository.GetActiveAppointmentsByUserId(userId, ct);
         }
 
+        public async Task UpdateAppointment(Guid appointmentId, AppointmentState state, CancellationToken ct)
+        {
+            var udpateAppointment = await _appointmentRepository.GetAppointment(appointmentId, ct);
 
+            udpateAppointment.State = state;
+            udpateAppointment.StateChangedAt = DateTime.Now;
+
+            await _appointmentRepository.UpdateAppointment(udpateAppointment, ct);
+        }
+        
 
 
         //public IReadOnlyList<Appointment> GetUserAppointments(Guid userId) => _appointmentRepository.GetAllByUserId(userId);

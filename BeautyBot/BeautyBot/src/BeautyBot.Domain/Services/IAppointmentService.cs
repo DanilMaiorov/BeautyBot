@@ -1,4 +1,5 @@
-﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
+﻿using BeautyBot.src.BeautyBot.Core.Enums;
+using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 
 namespace BeautyBot.src.BeautyBot.Domain.Services
@@ -9,7 +10,11 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task<IReadOnlyList<Appointment>> GetUserAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<IReadOnlyList<Appointment>> GetUserActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateTime appointmentTime, CancellationToken ct); // Передаем ID процедуры
+
         //void CancelAppointment(Guid appointmentId);
+
         //void CompleteAppointment(Guid appointmentId);
+
+        Task UpdateAppointment(Guid appointmentId, AppointmentState state, CancellationToken ct);
     }
 }

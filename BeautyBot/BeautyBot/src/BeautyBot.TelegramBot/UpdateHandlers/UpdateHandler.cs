@@ -27,7 +27,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             _appointmentService = appointmentService ?? throw new ArgumentNullException(nameof(appointmentService));
             _procedureCatalogService = procedureCatalogService ?? throw new ArgumentNullException(nameof(procedureCatalogService));
             _priceCalculationService = priceCalculationService ?? throw new ArgumentNullException(nameof(priceCalculationService));
-
             _ct = ct;
         }
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
@@ -103,19 +102,27 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         break;
 
                     case Command.ShowActiveAppointments:
-                        //await ShowAppointments(currentUser, botClient, currentChat, _ct);
+                        await ShowAppointments(currentUser.UserId, botClient, currentChat, _ct);
                         Console.WriteLine("ShowActiveAppointmentsShowActiveAppointments");
                         break;
 
                     case Command.ShowAllAppointments:
-                        //await ShowHelp(currentUser);
+                        await ShowAppointments(currentUser.UserId, botClient, currentChat, _ct, true);
                         Console.WriteLine("ShowAllAppointmentsShowAllAppointments");
                         break;
 
-                    case Command.AddAppointment:
+                    //case Command.AddAppointment:
+                    //    ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
+                    //    await _appointmentService.AddAppointment(currentUser, procedure, DateTime.Now, _ct);
+                    //    break;
+
+                    case Command.Add:
                         ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
                         await _appointmentService.AddAppointment(currentUser, procedure, DateTime.Now, _ct);
                         break;
+
+
+
 
                     case Command.CancelAppointment:
                         //await ShowHelp(currentUser);
@@ -127,8 +134,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         Console.WriteLine("EditAppointmentEditAppointment");
                         break;
                     case Command.UpdateAppointment:
-                        //await ShowHelp(currentUser);
-                        Console.WriteLine("UpdateAppointmentUpdateAppointment");
+                        await _appointmentService.UpdateAppointment(taskGuid, AppointmentState.Completed, _ct);
                         break;
                     case Command.FindAppointment:
                         //await ShowHelp(currentUser);
@@ -177,19 +183,19 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             }
             catch (Exception)
             {
-
                 throw;
             }
-
-
-            
-
-            //return Task.Delay(1);
         }
 
 
         #region МЕТОДЫ КОМАНД
-        private async Task ShowAppointments(Guid userId, ITelegramBotClient botClient, Chat currentChat, CancellationToken ct, bool isActive = false, IReadOnlyList<Appointment>? appointments = null)
+        private async Task ShowAppointments(
+            Guid userId, 
+            ITelegramBotClient botClient, 
+            Chat currentChat, 
+            CancellationToken ct, 
+            bool isActive = false, 
+            IReadOnlyList<Appointment>? appointments = null)
         {
             //присвою список через оператор null объединения appointment
             var appointmentsList = appointments ?? (isActive
