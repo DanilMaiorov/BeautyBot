@@ -3,7 +3,7 @@
     /// <summary>
     /// Класс описания юзера(клиента)
     /// </summary>
-    public class User
+    public class BeautyBotUser
     {
         public Guid UserId { get; init; }
         public long TelegramUserId { get; init; }

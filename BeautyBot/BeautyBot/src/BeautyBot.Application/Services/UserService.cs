@@ -1,4 +1,5 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Repositories;
+﻿using BeautyBot.src.BeautyBot.Domain.Entities;
+using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using System;
 using System.Collections.Generic;
@@ -17,16 +18,36 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             _userRepository = userRepository;
         }
 
-        //public User RegisterUser(long telegramUserId, string telegramUserName)
-        //{
-        //    var existingUser = _userRepository.GetByTelegramId(telegramUserId);
-        //    if (existingUser != null) return existingUser;
+        public async Task<BeautyBotUser?> GetUser(long telegramUserId, CancellationToken ct)
+        {
+            var user = await _userRepository.GetUserByTelegramUserId(telegramUserId, ct);
 
-        //    var newUser = new User(telegramUserId, telegramUserName);
-        //    _userRepository.Add(newUser);
-        //    return newUser;
-        //}
+            return user?.UserId != null
+                ? await _userRepository.GetUser(user.UserId, ct)
+                : null;
+        }
 
-        //public User? GetUser(long telegramUserId) => _userRepository.GetByTelegramId(telegramUserId);
+
+        /// <summary>
+        /// Метод регистрации нового юзера и добавление его в список
+        /// </summary>
+        /// <param name="telegramUserId">Телеграм ID</param>
+        /// <param name="telegramUserName">Имя в Телеграм</param>
+        /// <param name="ct"></param>
+        /// <returns>BeautyBotUser</returns>
+        public async Task<BeautyBotUser> RegisterUser(long telegramUserId, string telegramUserName, CancellationToken ct)
+        {
+            var newUser = new BeautyBotUser
+            {
+                UserId = Guid.NewGuid(),
+                TelegramUserId = telegramUserId,
+                TelegramUserName = telegramUserName,
+                RegisteredAt = DateTime.Now
+            };
+
+            await _userRepository.Add(newUser, ct);
+
+            return newUser;
+        }
     }
 }

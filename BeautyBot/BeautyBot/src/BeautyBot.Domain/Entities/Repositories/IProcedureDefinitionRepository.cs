@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BeautyBot.src.BeautyBot.Domain.Repositories
+namespace BeautyBot.src.BeautyBot.Domain.Entities.Repositories
 {
     // Репозиторий для процедур (всех типов)
     public interface IProcedureDefinitionRepository : IRepository<IProcedure> // Или IRepository<ProcedureBase>

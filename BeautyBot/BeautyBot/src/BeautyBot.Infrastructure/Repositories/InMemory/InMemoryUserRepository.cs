@@ -1,5 +1,6 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Entities;
-using BeautyBot.src.BeautyBot.Domain.Repositories;
+﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
+using BeautyBot.src.BeautyBot.Domain.Entities;
+using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,10 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 {
     public class InMemoryUserRepository : IUserRepository
     {
+        private readonly List<BeautyBotUser> UsersList = [];
+
+
+
         //private readonly List<User> _users = new List<User>();
         //// ... реализация методов IUserRepository
         //public User? GetByTelegramId(long telegramUserId) => _users.FirstOrDefault(u => u.TelegramUserId == telegramUserId);
@@ -22,19 +27,37 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         //    if (existing != null) { /* update properties */ }
         //}
         //public void Delete(Guid id) { _users.RemoveAll(u => u.Id == id); }
-        public void Add(User user, CancellationToken ct)
+
+
+        //Task<BeautyBotUser?> GetUser(Guid userId, CancellationToken ct);
+        //Task<BeautyBotUser?> GetUserByTelegramUserId(long telegramUserId, CancellationToken ct);
+        //Task Add(BeautyBotUser user, CancellationToken ct);
+        public async Task<BeautyBotUser?> GetUser(Guid userId, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var user = UsersList.FirstOrDefault(x => x.UserId == userId);
+
+            //сделаю искусственную задержку для асинхронности
+            await Task.Delay(1, ct);
+
+            return user;
         }
 
-        public User? GetUser(Guid userId, CancellationToken ct)
+        public async Task<BeautyBotUser?> GetUserByTelegramUserId(long telegramUserId, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var user = UsersList.FirstOrDefault(x => x.TelegramUserId == telegramUserId);
+
+            //сделаю искусственную задержку для асинхронности
+            await Task.Delay(1, ct);
+
+            return user;
         }
 
-        public User? GetUserByTelegramUserId(long telegramUserId, CancellationToken ct)
+        public async Task Add(BeautyBotUser user, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            UsersList.Add(user);
+
+            //сделаю искусственную задержку для асинхронности
+            await Task.Delay(1, ct);
         }
     }
 }

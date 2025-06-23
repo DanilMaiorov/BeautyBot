@@ -1,11 +1,5 @@
 ﻿using BeautyBot.src.BeautyBot.Core.BaseClasses;
 using BeautyBot.src.BeautyBot.Core.Enums;
-using BeautyBot.src.BeautyBot.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BeautyBot.src.BeautyBot.Domain.Entities
 {
@@ -25,7 +19,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         }
 
         public Manicure(string name, decimal price, Procedure procedure, bool withRemove = true) : base(name, price, procedure) {
-
             _withRemove = withRemove;
         }
     }    

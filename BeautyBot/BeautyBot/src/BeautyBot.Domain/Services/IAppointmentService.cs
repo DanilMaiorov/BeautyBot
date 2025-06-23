@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
+using BeautyBot.src.BeautyBot.Domain.Entities;
 
 namespace BeautyBot.src.BeautyBot.Domain.Services
 {
     // Новый сервис для работы с записями (бронированием)
     public interface IAppointmentService
     {
-        //IReadOnlyList<Appointment> GetUserAppointments(Guid userId);
-        //IReadOnlyList<Appointment> GetUserActiveAppointments(Guid userId);
-        //Appointment BookAppointment(Guid userId, Guid procedureId, DateTime appointmentTime); // Передаем ID процедуры
+        Task<IReadOnlyList<Appointment>> GetUserAppointmentsByUserId(Guid userId, CancellationToken ct);
+        Task<IReadOnlyList<Appointment>> GetUserActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
+        Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateTime appointmentTime, CancellationToken ct); // Передаем ID процедуры
         //void CancelAppointment(Guid appointmentId);
         //void CompleteAppointment(Guid appointmentId);
     }

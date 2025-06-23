@@ -1,4 +1,5 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Repositories;
+﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
+using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,5 +25,9 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         //public void Add(IProcedure entity) { _procedures.Add(entity); }
         //public void Update(IProcedure entity) { /* ... */ }
         //public void Delete(Guid id) { _procedures.RemoveAll(p => p.Id == id); }
+        public Task Add(IProcedure entity, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

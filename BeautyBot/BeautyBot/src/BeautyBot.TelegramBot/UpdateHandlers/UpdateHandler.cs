@@ -1,11 +1,9 @@
-﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
-using BeautyBot.src.BeautyBot.Domain.Services;
+﻿using BeautyBot.src.BeautyBot.Domain.Services;
 using Otus.ToDoList.ConsoleBot.Types;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Otus.ToDoList.ConsoleBot;
+using BeautyBot.src.BeautyBot.Domain.Entities;
+using BeautyBot.src.BeautyBot.Core.Enums;
+using BeautyBot.src.BeautyBot.Core.Interfaces;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -16,7 +14,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         private readonly IProcedureCatalogService _procedureCatalogService;
         private readonly IPriceCalculationService _priceCalculationService;
 
-        CancellationToken _cancellationToken;
+        CancellationToken _ct;
 
         public UpdateHandler(
             IUserService userService,
@@ -25,28 +23,241 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             IPriceCalculationService priceCalculationService,
             CancellationToken ct)
         {
-            _userService = userService;
-            _appointmentService = appointmentService;
-            _procedureCatalogService = procedureCatalogService;
-            _priceCalculationService = priceCalculationService;
-            _cancellationToken = ct;
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _appointmentService = appointmentService ?? throw new ArgumentNullException(nameof(appointmentService));
+            _procedureCatalogService = procedureCatalogService ?? throw new ArgumentNullException(nameof(procedureCatalogService));
+            _priceCalculationService = priceCalculationService ?? throw new ArgumentNullException(nameof(priceCalculationService));
+
+            _ct = ct;
         }
-        public Task HandleUpdateAsync(Otus.ToDoList.ConsoleBot.ITelegramBotClient botClient, Update update, CancellationToken ct)
+        public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
         {
             var currentChat = update.Message.Chat;
             string message = "";
 
-            return Task.Delay(1);
+            Console.WriteLine("Новое сообщение");
+
+            try
+            {
+                var currentUser = await _userService.GetUser(update.Message.From.Id, _ct);
+
+                var currentUserTaskList = currentUser != null
+                    ? await _appointmentService.GetUserAppointmentsByUserId(currentUser.UserId, _ct)
+                    : null;
+
+                if (update.Message.Id == 1)
+                {
+                     //botClient.SendMessage(currentChat, $"Привет! Это BeautyBot! \n", ct);
+                    await botClient.SendMessage(currentChat, $"Привет! Это BeautyBot! \n", _ct);
+                    return;
+                }
+
+                if (currentUser == null)
+                {
+                    if (update.Message.Text != "/start")
+                    {
+                        //await botClient.SendMessage(currentChat, "До регистрации доступна только команда /start. Нажмите на кнопку ниже или введите /start", replyMarkup: Helper.keyboardStart, cancellationToken: ct);
+                        await botClient.SendMessage(currentChat, "До регистрации доступна только команда /start. Нажмите на кнопку ниже или введите /start", ct);
+                        return;
+                    }
+                }
+
+                string input = update.Message.Text;
+
+                (string inputCommand, string inputText, Guid taskGuid) = Helper.InputCheck(input, currentUserTaskList);
+
+                input = inputCommand.Replace("/", string.Empty);
+
+                Command command;
+
+                if (Enum.TryParse<Command>(input, true, out var result))
+                {
+                    command = result;
+                }
+                else
+                {
+                    command = default;
+                }
+
+                Console.WriteLine(input);
+
+
+
+                switch (command)
+                {
+                    case Command.Start:
+                        if (currentUser == null)
+                        {
+                            currentUser = await _userService.RegisterUser(update.Message.From.Id, update.Message.From.Username, _ct);
+                        }
+                        await botClient.SendMessage(currentChat, "Спасибо за регистрацию", _ct);
+                        await Helper.CommandsRender(currentChat, botClient, _ct);
+                        break;
+
+                    case Command.Help:
+                        await ShowHelp(botClient, currentChat, currentUser, _ct);
+                        break;
+
+                    case Command.Info:
+                        await ShowInfo(botClient, currentChat, _ct);
+                        break;
+
+                    case Command.ShowActiveAppointments:
+                        //await ShowAppointments(currentUser, botClient, currentChat, _ct);
+                        Console.WriteLine("ShowActiveAppointmentsShowActiveAppointments");
+                        break;
+
+                    case Command.ShowAllAppointments:
+                        //await ShowHelp(currentUser);
+                        Console.WriteLine("ShowAllAppointmentsShowAllAppointments");
+                        break;
+
+                    case Command.AddAppointment:
+                        ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
+                        await _appointmentService.AddAppointment(currentUser, procedure, DateTime.Now, _ct);
+                        break;
+
+                    case Command.CancelAppointment:
+                        //await ShowHelp(currentUser);
+                        Console.WriteLine("CancelAppointment");
+                        break;
+
+                    case Command.EditAppointment:
+                        //await ShowHelp(currentUser);
+                        Console.WriteLine("EditAppointmentEditAppointment");
+                        break;
+                    case Command.UpdateAppointment:
+                        //await ShowHelp(currentUser);
+                        Console.WriteLine("UpdateAppointmentUpdateAppointment");
+                        break;
+                    case Command.FindAppointment:
+                        //await ShowHelp(currentUser);
+                        Console.WriteLine("FindAppointmentFindAppointment");
+                        break;
+                    case Command.Report:
+                        //await ShowHelp(currentUser);
+                        Console.WriteLine("ReportReport");
+                        break;
+
+                    case Command.Exit:
+                        //await ShowHelp(currentUser);
+                        Console.WriteLine("ExitExit");
+                        break;
+
+
+                    //case Commands.Removetask:
+                    //    //вызов метода удаления задачи
+                    //    await _toDoService.Delete(taskGuid, ct);
+                    //    await botClient.SendMessage(currentChat, $"Задача {taskGuid} удалена.\n", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
+                    //    break;
+
+                    //case Commands.Completetask:
+                    //    await _toDoService.MarkCompleted(taskGuid, ct);
+                    //    await botClient.SendMessage(currentChat, $"Задача {taskGuid} выполнена.\n", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
+                    //    break;
+
+                    //case Commands.Find:
+                    //    var findedTasks = await _toDoService.Find(currentUser, inputText, ct);
+                    //    await ShowTasks(currentUser.UserId, true, findedTasks);
+                    //    break;
+
+                    //case Commands.Report:
+                    //    var (total, completed, active, generatedAt) = await _toDoReportService.GetUserStats(currentUser.UserId, ct);
+                    //    await botClient.SendMessage(currentChat, $"Статистика по задачам на {generatedAt}. Всего: {total}; Завершенных: {completed}; Активных: {active};", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
+                    //    break;
+
+                    //case Commands.Exit:
+                    //    await botClient.SendMessage(currentChat, "Нажмите CTRL+C (Ввод) для остановки бота", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
+                    //    break;
+                    default:
+                        await botClient.SendMessage(currentChat, "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", _ct);
+                        await Helper.CommandsRender(currentChat, botClient, _ct);
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+
+            
+
+            //return Task.Delay(1);
         }
 
 
+        #region МЕТОДЫ КОМАНД
+        private async Task ShowAppointments(Guid userId, ITelegramBotClient botClient, Chat currentChat, CancellationToken ct, bool isActive = false, IReadOnlyList<Appointment>? appointments = null)
+        {
+            //присвою список через оператор null объединения appointment
+            var appointmentsList = appointments ?? (isActive
+                ? await _appointmentService.GetUserAppointmentsByUserId(userId, ct)
+                : await _appointmentService.GetUserActiveAppointmentsByUserId(userId, ct));
+
+            if (appointmentsList.Count == 0)
+            {
+                string emptyMessage = isActive ? "Список записей пуст.\n" : "Aктивных записей нет";
+                await botClient.SendMessage(currentChat, emptyMessage, ct);
+                return;
+            }
+
+            //выберу текст меседжа через тернарный оператор
+            string message = appointments != null ? "Список найденных записей:"
+                : (isActive ? "Список всех записей:" : "Список активных записей:");
+
+            await botClient.SendMessage(currentChat, message, ct);
+
+            await Helper.AppointmentsListRender(appointmentsList, botClient, currentChat, ct);
+        }
+
+        private async Task ShowHelp(ITelegramBotClient botClient, Chat currentChat, BeautyBotUser user, CancellationToken ct)
+        {
+            if (user == null)
+            {
+                await botClient.SendMessage(currentChat, $"Незнакомец, это BeautyBot - телеграм бот записи на бьюти процедуры.\n" +
+                $"Введя команду \"/start\" бот предложит тебе ввести имя\n" +
+                $"Введя команду \"/help\" ты получишь справку о командах бота\n" +
+                $"Введя команду \"/info\" ты получишь информацию о версии бота\n" +
+                $"Введя команду \"/exit\" бот попрощается и завершит работу\n", ct);
+            }
+            else
+            {
+                await botClient.SendMessage(currentChat, $"{user.TelegramUserName}, это BeautyBot - телеграм бот записи на бьюти процедуры.\n" +
+                $"Введя команду \"/start\" команда регистрации в боте\n" +
+                $"Введя команду \"/help\" ты получишь справку о командах ,jnf\n" +
+                $"Введя команду \"/add\" *название задачи*\" ты сможешь записаться на процедуру\n" +
+                $"Введя команду \"/showprocedures\" ты сможешь увидеть список активных записей в списке\n" +
+                $"Введя команду \"/showallprocedures\" ты сможешь увидеть список всех записей в списке\n" +
+                $"Введя команду \"/cancelprocedure \" *номер задачи*\" ты сможешь отменить запись\n" +
+                $"Введя команду \"/find\" *название задачи*\" ты сможешь увидеть список всех задач начинающихся с названия задачи\n" +
+                $"Введя команду \"/report\" ты получишь отчёт по записям\n" +
+                $"Введя команду \"/info\" ты получишь информацию о версии программы\n" +
+                $"Введя команду \"/exit\" бот попрощается и завершит работу\n", ct);
+            }
+        }
+
+        private async Task ShowInfo(ITelegramBotClient botClient, Chat currentChat, CancellationToken ct)
+        {
+            DateTime releaseDate = new DateTime(2025, 06, 23);
+            await botClient.SendMessage(currentChat, $"Это BeautyBot версии 1.0 Beta. Релиз {releaseDate}.\n", ct);
+        }
+        #endregion
 
 
 
-        public Task HandleErrorAsync(Otus.ToDoList.ConsoleBot.ITelegramBotClient botClient, Exception exception, CancellationToken ct)
+
+
+        public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
+
+        //Task Otus.ToDoList.ConsoleBot.IUpdateHandler.HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
 
 

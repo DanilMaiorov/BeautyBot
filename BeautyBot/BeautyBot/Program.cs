@@ -1,5 +1,4 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Services;
-using BeautyBot.src.BeautyBot.Domain.Repositories;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
 using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Application.Services;
@@ -7,6 +6,7 @@ using BeautyBot.src.BeautyBot.Application.Services;
 using BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using Otus.ToDoList.ConsoleBot;
+using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 
 namespace BeautyBot
 {
@@ -14,9 +14,6 @@ namespace BeautyBot
     {
         static void Main(string[] args)
         {
-
-
-
             //string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
 
             //if (string.IsNullOrEmpty(token))
@@ -42,12 +39,7 @@ namespace BeautyBot
 
 
 
-
-
-
-            Otus.ToDoList.ConsoleBot.ITelegramBotClient _botClient = new ConsoleBotClient();
-
-
+            ITelegramBotClient _botClient = new ConsoleBotClient();
 
 
             using var cts = new CancellationTokenSource();
@@ -63,7 +55,7 @@ namespace BeautyBot
             IProcedureCatalogService _procedureCatalogService = new ProcedureCatalogService(procedureDefinitionRepository);
             IPriceCalculationService _priceCalculationService = new PriceCalculationService();
 
-            //добавить сервис для отчетика
+            //добавить сервис для отчета
             //IToDoReportService _toDoReportService = new ToDoReportService(toDoRepository);
 
 

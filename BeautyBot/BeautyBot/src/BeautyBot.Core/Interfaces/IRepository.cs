@@ -10,7 +10,7 @@ namespace BeautyBot.src.BeautyBot.Core.Interfaces
     {
         //    T? GetById(Guid id);
         //    IReadOnlyList<T> GetAll();
-        //    void Add(T entity);
+            Task Add(T entity, CancellationToken ct);
         //    void Update(T entity);
         //    void Delete(Guid id);
     }

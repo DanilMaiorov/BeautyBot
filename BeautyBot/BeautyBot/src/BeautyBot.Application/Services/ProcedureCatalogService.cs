@@ -1,4 +1,4 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Repositories;
+﻿using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using System;
 using System.Collections.Generic;

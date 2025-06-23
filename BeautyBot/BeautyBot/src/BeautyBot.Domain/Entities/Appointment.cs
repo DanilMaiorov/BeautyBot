@@ -8,6 +8,8 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public IProcedure Procedure { get; set; } // храню интерфейс или конкретный класс
+        public DateTime CreatedAt { get; set; }
+        public DateTime StateChangedAt { get; set; }
         public DateTime AppointmentTime { get; set; }
         public AppointmentStatus Status { get; set; } // Active, Completed, Cancelled
 

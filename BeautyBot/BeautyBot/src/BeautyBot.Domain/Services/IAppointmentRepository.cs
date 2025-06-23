@@ -11,7 +11,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
     // Репозиторий для записей (назначений)
     public interface IAppointmentRepository : IRepository<Appointment>
     {
-        //IReadOnlyList<Appointment> GetAllByUserId(Guid userId);
-        //IReadOnlyList<Appointment> GetActiveByUserId(Guid userId);
+        Task<IReadOnlyList<Appointment>> GetAllAppointmentsByUserId(Guid userId, CancellationToken ct);
+        Task<IReadOnlyList<Appointment>> GetActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
     }
 }
