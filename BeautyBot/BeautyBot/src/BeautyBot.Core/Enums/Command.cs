@@ -5,7 +5,7 @@
     /// </summary>
     public enum Command
     {
-        Start,
+        Start = 1,
         Help,
         Info,
         ShowActiveAppointments,

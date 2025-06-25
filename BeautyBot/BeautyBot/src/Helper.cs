@@ -77,6 +77,12 @@ namespace BeautyBot.src
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
+
+
+
+
+
+
             if (input.StartsWith("/add") || input.StartsWith("/del") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
             {
                 if (input.StartsWith("/add "))
@@ -102,7 +108,16 @@ namespace BeautyBot.src
                     input = "unregistered user command";
                 }
             }
-           
+
+            switch (input)
+            {
+                case "Старт":
+                    input = "/start";
+                    break;
+                default:
+                    break;
+            }
+
             return (input, cutInput, taskGuid);
         }
 

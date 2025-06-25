@@ -102,7 +102,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         {
                             currentUser = await _userService.RegisterUser(update.Message.From.Id, update.Message.From.Username, _ct);
                         }
-                        await botClient.SendMessage(currentChat, "Спасибо за регистрацию", cancellationToken: _ct);
+                        await botClient.SendMessage(currentChat, "Спасибо за регистрацию", replyMarkup: Keyboards.keyboardFirstStep, cancellationToken: _ct);
                         await Helper.CommandsRender(currentChat, botClient, _ct);
                         break;
 
@@ -196,8 +196,11 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     //    await botClient.SendMessage(currentChat, "Нажмите CTRL+C (Ввод) для остановки бота", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
                     //    break;
                     default:
-                        await botClient.SendMessage(currentChat, "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", cancellationToken: _ct);
-                        await Helper.CommandsRender(currentChat, botClient, _ct);
+                        if (currentUser == null)
+                            await botClient.SendMessage(currentChat, "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", replyMarkup: Keyboards.keyboardStart, cancellationToken: _ct);
+                        
+                            
+                        //await Helper.CommandsRender(currentChat, botClient, _ct);
                         break;
                 }
             }
