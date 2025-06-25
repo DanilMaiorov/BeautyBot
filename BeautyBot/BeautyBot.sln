@@ -5,8 +5,6 @@ VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BeautyBot", "BeautyBot\BeautyBot.csproj", "{4DF11AF0-7089-4AB6-A527-C99E01409C97}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Otus.ToDoList.ConsoleBot", "..\..\genzel\Desktop\Nail\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj", "{7343B841-7542-4EB4-ACF2-E79B734834EC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{4DF11AF0-7089-4AB6-A527-C99E01409C97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DF11AF0-7089-4AB6-A527-C99E01409C97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DF11AF0-7089-4AB6-A527-C99E01409C97}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7343B841-7542-4EB4-ACF2-E79B734834EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7343B841-7542-4EB4-ACF2-E79B734834EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7343B841-7542-4EB4-ACF2-E79B734834EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7343B841-7542-4EB4-ACF2-E79B734834EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

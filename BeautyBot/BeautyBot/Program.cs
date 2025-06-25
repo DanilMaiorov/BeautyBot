@@ -5,48 +5,36 @@ using BeautyBot.src.BeautyBot.Application.Services;
 //using BeautyBot.src.BeautyBot.Infrastructure.Repositories.Json;
 using BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers;
 using BeautyBot.src.BeautyBot.Domain.Entities;
-using Otus.ToDoList.ConsoleBot;
 using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
 
 namespace BeautyBot
 {
     public class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            //string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
+            string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
 
-            //if (string.IsNullOrEmpty(token))
-            //{
-            //    Console.WriteLine("Bot token not found. Please set the TELEGRAM_BOT_TOKEN environment variable.");
-            //    return;
-            //}
-
-            //var botClient = new TelegramBotClient(token);
-
-            IProcedure proc = new GelPolishManicure();
-
-            IProcedure proc2 = new FrenchManicure();
-            void ManLog(IProcedure procedure)
+            if (string.IsNullOrEmpty(token))
             {
-                Console.WriteLine(procedure.Name);
-                Console.WriteLine(procedure.Price);
+                Console.WriteLine("Bot token not found. Please set the TELEGRAM_BOT_TOKEN environment variable.");
+                return;
             }
 
-            ManLog(proc);
-            ManLog(proc2);
-            //работает!
+            var botClient = new TelegramBotClient(token);
 
-
-
-            ITelegramBotClient _botClient = new ConsoleBotClient();
+            ReceiverOptions receiverOptions = new()
+            {
+                AllowedUpdates = []
+            };
 
             using var cts = new CancellationTokenSource();
 
             IUserRepository userRepository = new InMemoryUserRepository();
             IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository();
             IProcedureDefinitionRepository procedureDefinitionRepository = new InMemoryProcedureDefinitionRepository();
-
 
             IUserService _userService = new UserService(userRepository);
             IAppointmentService _appointmentService = new AppointmentService(appointmentRepository, procedureDefinitionRepository);
@@ -57,16 +45,12 @@ namespace BeautyBot
             //добавить сервис для отчета
             //IToDoReportService _toDoReportService = new ToDoReportService(toDoRepository);
 
-
-            Otus.ToDoList.ConsoleBot.IUpdateHandler _updateHandler = new UpdateHandler(
-                _userService, 
-                _appointmentService, 
-                _procedureCatalogService, 
-                _priceCalculationService, 
+            IUpdateHandler _updateHandler = new UpdateHandler(
+                _userService,
+                _appointmentService,
+                _procedureCatalogService,
+                _priceCalculationService,
                 cts.Token);
-
-
-
 
             if (_updateHandler is UpdateHandler castHandler)
             {
@@ -76,40 +60,49 @@ namespace BeautyBot
 
                 try
                 {
-                    //_botClient.StartReceiving(
-                    //_updateHandler,
-                    //    receiverOptions: receiverOptions,
-                    //    cancellationToken: cts.Token
-                    //);
-
-                    _botClient.StartReceiving(_updateHandler, cts.Token);
+                    botClient.StartReceiving(
+                    _updateHandler,
+                        receiverOptions: receiverOptions,
+                        cancellationToken: cts.Token
+                    );
 
                     //запускаю цикл, которые будет работать пока не нажму А
-                    //while (true)
-                    //{
-                    //    Console.WriteLine("Нажми A и Ввод для остановки и выхода из бота");
-                    //    var s = Console.ReadLine();
+                    while (true)
+                    {
+                        Console.WriteLine("Нажми A и Ввод для остановки и выхода из бота");
+                        var s = Console.ReadLine();
 
-                    //    if (s?.ToUpper() == "A")
-                    //    {
-                    //        cts.Cancel();
-                    //        Console.WriteLine("Бот остановлен");
-                    //        break;
-                    //    }
-                    //    var me = await botClient.GetMe();
-                    //    Console.WriteLine($"{me.FirstName} запущен!");
-                    //}
+                        if (s?.ToUpper() == "A")
+                        {
+                            cts.Cancel();
+                            Console.WriteLine("Бот остановлен");
+                            break;
+                        }
+                        var me = await botClient.GetMe();
+                        Console.WriteLine($"{me.FirstName} запущен!");
+                    }
                 }
                 finally
                 {
                     //отписываюсь от событий
-                    //castHandler.OnHandleUpdateStarted -= castHandler.HandleStart;
-                    //castHandler.OnHandleUpdateCompleted -= castHandler.HandleComplete;
+                    castHandler.OnHandleUpdateStarted -= castHandler.HandleStart;
+                    castHandler.OnHandleUpdateCompleted -= castHandler.HandleComplete;
                     Console.WriteLine("finally");
                 }
             }
 
+            //IProcedure proc = new GelPolishManicure();
 
+            //IProcedure proc2 = new FrenchManicure();
+            //void ManLog(IProcedure procedure)
+            //{
+            //    Console.WriteLine(procedure.Name);
+            //    Console.WriteLine(procedure.Price);
+            //}
+
+            //ManLog(proc);
+            //ManLog(proc2);
+            //работает!
 
 
             // В Program.cs (для .NET 6+) или Startup.cs

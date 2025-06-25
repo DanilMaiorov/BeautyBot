@@ -1,14 +1,15 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Services;
-using Otus.ToDoList.ConsoleBot.Types;
-using Otus.ToDoList.ConsoleBot;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Core.Enums;
 using BeautyBot.src.BeautyBot.Core.Interfaces;
+using Telegram.Bot.Polling;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
     public delegate void MessageEventHandler(string message);
-    public class UpdateHandler : Otus.ToDoList.ConsoleBot.IUpdateHandler
+    public class UpdateHandler : IUpdateHandler
     {
         private readonly IUserService _userService;
         private readonly IAppointmentService _appointmentService;
@@ -37,7 +38,10 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
         {
             var currentChat = update.Message.Chat;
-            string message = "";
+
+            string input = update.Message.Text;
+
+            string eventMessage = "";
 
             try
             {
@@ -50,30 +54,26 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 if (update.Message.Id == 1)
                 {
                      //botClient.SendMessage(currentChat, $"Привет! Это BeautyBot! \n", ct);
-                    await botClient.SendMessage(currentChat, $"Привет! Это BeautyBot! \n", _ct);
+                    await botClient.SendMessage(currentChat, $"Привет! Это BeautyBot! \n", cancellationToken: _ct);
                     return;
                 }
 
                 if (currentUser == null)
                 {
-                    if (update.Message.Text != "/start")
+                    if (input != "/start" && input != "Старт")
                     {
-                        //await botClient.SendMessage(currentChat, "До регистрации доступна только команда /start. Нажмите на кнопку ниже или введите /start", replyMarkup: Helper.keyboardStart, cancellationToken: ct);
-                        await botClient.SendMessage(currentChat, "До регистрации доступна только команда /start. Нажмите на кнопку ниже или введите /start", ct);
+                        await botClient.SendMessage(currentChat, "Для запуска бота необходимо нажать на кнопку ниже или ввести /start", replyMarkup: Keyboards.keyboardStart, cancellationToken: _ct);
                         return;
                     }
                 }
 
-                string input = update.Message.Text;
+
 
                 //присваиваю начальное значение введёного сообщения
-                message = input;
+                eventMessage = input;
 
                 //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
-                OnHandleUpdateStarted?.Invoke(message);
-
-
-
+                OnHandleUpdateStarted?.Invoke(eventMessage);
 
                 (string inputCommand, string inputText, Guid taskGuid) = Helper.InputCheck(input, currentUserTaskList);
 
@@ -93,7 +93,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 Console.WriteLine(input);
 
                 //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
-                OnHandleUpdateCompleted?.Invoke(message);
+                OnHandleUpdateCompleted?.Invoke(eventMessage);
 
                 switch (command)
                 {
@@ -102,7 +102,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         {
                             currentUser = await _userService.RegisterUser(update.Message.From.Id, update.Message.From.Username, _ct);
                         }
-                        await botClient.SendMessage(currentChat, "Спасибо за регистрацию", _ct);
+                        await botClient.SendMessage(currentChat, "Спасибо за регистрацию", cancellationToken: _ct);
                         await Helper.CommandsRender(currentChat, botClient, _ct);
                         break;
 
@@ -196,7 +196,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     //    await botClient.SendMessage(currentChat, "Нажмите CTRL+C (Ввод) для остановки бота", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
                     //    break;
                     default:
-                        await botClient.SendMessage(currentChat, "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", _ct);
+                        await botClient.SendMessage(currentChat, "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", cancellationToken: _ct);
                         await Helper.CommandsRender(currentChat, botClient, _ct);
                         break;
                 }
@@ -225,7 +225,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             if (appointmentsList.Count == 0)
             {
                 string emptyMessage = isActive ? "Список записей пуст.\n" : "Aктивных записей нет";
-                await botClient.SendMessage(currentChat, emptyMessage, ct);
+                await botClient.SendMessage(currentChat, emptyMessage, cancellationToken: ct);
                 return;
             }
 
@@ -233,7 +233,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             string message = appointments != null ? "Список найденных записей:"
                 : (isActive ? "Список всех записей:" : "Список активных записей:");
 
-            await botClient.SendMessage(currentChat, message, ct);
+            await botClient.SendMessage(currentChat, message, cancellationToken: ct);
 
             await Helper.AppointmentsListRender(appointmentsList, botClient, currentChat, ct);
         }
@@ -246,7 +246,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 $"Введя команду \"/start\" бот предложит тебе ввести имя\n" +
                 $"Введя команду \"/help\" ты получишь справку о командах бота\n" +
                 $"Введя команду \"/info\" ты получишь информацию о версии бота\n" +
-                $"Введя команду \"/exit\" бот попрощается и завершит работу\n", ct);
+                $"Введя команду \"/exit\" бот попрощается и завершит работу\n", cancellationToken: ct);
             }
             else
             {
@@ -260,24 +260,25 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 $"Введя команду \"/find\" *название задачи*\" ты сможешь увидеть список всех задач начинающихся с названия задачи\n" +
                 $"Введя команду \"/report\" ты получишь отчёт по записям\n" +
                 $"Введя команду \"/info\" ты получишь информацию о версии программы\n" +
-                $"Введя команду \"/exit\" бот попрощается и завершит работу\n", ct);
+                $"Введя команду \"/exit\" бот попрощается и завершит работу\n", cancellationToken: ct);
             }
         }
 
         private async Task ShowInfo(ITelegramBotClient botClient, Chat currentChat, CancellationToken ct)
         {
             DateTime releaseDate = new DateTime(2025, 06, 23);
-            await botClient.SendMessage(currentChat, $"Это BeautyBot версии 1.0 Beta. Релиз {releaseDate}.\n", ct);
+            await botClient.SendMessage(currentChat, $"Это BeautyBot версии 1.0 Beta. Релиз {releaseDate}.\n", cancellationToken: ct);
         }
         #endregion
 
 
-
-
-
-        public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken ct)
+        public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            ct.ThrowIfCancellationRequested();
+
+            Console.WriteLine($"Обработанное исключение: {exception.Message}");
+
+            return Task.CompletedTask;
         }
 
         public void HandleStart(string message)
