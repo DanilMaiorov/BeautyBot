@@ -1,14 +1,8 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
-using Otus.ToDoList.ConsoleBot.Types;
-using Otus.ToDoList.ConsoleBot;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using BeautyBot.src.BeautyBot.Core.Enums;
-using System.Collections;
+using Telegram.Bot.Types;
+using Telegram.Bot;
 
 namespace BeautyBot.src
 {
@@ -66,7 +60,7 @@ namespace BeautyBot.src
                 }
             }
 
-            await botClient.SendMessage(chat, builder.ToString(), ct);
+            await botClient.SendMessage(chat, builder.ToString(), cancellationToken: ct);
 
             //рендерю менюшку
             //await botClient.SetMyCommands(commands, cancellationToken: ct);
@@ -117,11 +111,10 @@ namespace BeautyBot.src
         /// <summary>
         /// Метод рендера списка записей на процедуры
         /// </summary>
-        /// <param name="appointments"></param>
-        /// <param name="botClient"></param>
-        /// <param name="chat"></param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
+        /// <param name="appointments">Список записей пользователя</param>
+        /// <param name="botClient">Бот</param>
+        /// <param name="chat">Номер чата</param>
+        /// <param name="ct">Токен отмены</param>
         public async static Task AppointmentsListRender(IReadOnlyList<Appointment> appointments, ITelegramBotClient botClient, Chat chat, CancellationToken ct)
         {
             int appointmentCounter = 0;
@@ -131,7 +124,7 @@ namespace BeautyBot.src
             foreach (Appointment appointment in appointments)
             {
                 appointmentCounter++;
-                await botClient.SendMessage(chat, $"{appointmentCounter}) ({appointment.State}) {appointment.Procedure.Name} - {appointment.CreatedAt}", ct);
+                await botClient.SendMessage(chat, $"{appointmentCounter}) ({appointment.State}) {appointment.Procedure.Name} - {appointment.CreatedAt}, {appointment.Id}", cancellationToken: ct);
 
                 //тут надо попробовать выводить запись вместе с кнопками разными сообщениями
                 //await botClient.SendMessage(chat, $"\n{appointment.Id}", ct);
