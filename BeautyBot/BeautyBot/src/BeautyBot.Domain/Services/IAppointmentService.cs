@@ -11,7 +11,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task<IReadOnlyList<Appointment>> GetUserActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateTime appointmentTime, CancellationToken ct); // Передаем ID процедуры
 
-        //void CancelAppointment(Guid appointmentId);
+        Task CancelAppointment(Guid appointmentId, CancellationToken ct);
 
         //void CompleteAppointment(Guid appointmentId);
 

@@ -12,6 +12,8 @@
         ShowAllAppointments,
         Add,
         //AddAppointment,
+        Del,
+        //AddAppointment,
         CancelAppointment,
         FindAppointment,
         EditAppointment,

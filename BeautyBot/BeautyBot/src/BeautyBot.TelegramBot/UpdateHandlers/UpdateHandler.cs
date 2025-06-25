@@ -7,6 +7,7 @@ using BeautyBot.src.BeautyBot.Core.Interfaces;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
+    public delegate void MessageEventHandler(string message);
     public class UpdateHandler : Otus.ToDoList.ConsoleBot.IUpdateHandler
     {
         private readonly IUserService _userService;
@@ -14,7 +15,11 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         private readonly IProcedureCatalogService _procedureCatalogService;
         private readonly IPriceCalculationService _priceCalculationService;
 
-        CancellationToken _ct;
+        private readonly CancellationToken _ct;
+
+        //добавлю 2 события
+        public event MessageEventHandler OnHandleUpdateStarted;
+        public event MessageEventHandler OnHandleUpdateCompleted;
 
         public UpdateHandler(
             IUserService userService,
@@ -33,8 +38,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         {
             var currentChat = update.Message.Chat;
             string message = "";
-
-            Console.WriteLine("Новое сообщение");
 
             try
             {
@@ -63,6 +66,15 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                 string input = update.Message.Text;
 
+                //присваиваю начальное значение введёного сообщения
+                message = input;
+
+                //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
+                OnHandleUpdateStarted?.Invoke(message);
+
+
+
+
                 (string inputCommand, string inputText, Guid taskGuid) = Helper.InputCheck(input, currentUserTaskList);
 
                 input = inputCommand.Replace("/", string.Empty);
@@ -80,7 +92,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                 Console.WriteLine(input);
 
-
+                //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
+                OnHandleUpdateCompleted?.Invoke(message);
 
                 switch (command)
                 {
@@ -115,6 +128,13 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     //    ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
                     //    await _appointmentService.AddAppointment(currentUser, procedure, DateTime.Now, _ct);
                     //    break;
+
+
+                    case Command.Del:
+                        await _appointmentService.CancelAppointment(taskGuid, _ct);
+                        break;
+
+
 
                     case Command.Add:
                         ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
@@ -258,6 +278,16 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken ct)
         {
             throw new NotImplementedException();
+        }
+
+        public void HandleStart(string message)
+        {
+            Console.WriteLine($"Началась обработка сообщения \"{message}\"\n");
+        }
+
+        public void HandleComplete(string message)
+        {
+            Console.WriteLine($"Закончилась обработка сообщения \"{message}\"\n");
         }
 
         //Task Otus.ToDoList.ConsoleBot.IUpdateHandler.HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)

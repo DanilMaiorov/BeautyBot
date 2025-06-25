@@ -81,5 +81,13 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
                 throw new KeyNotFoundException($"Запись с номером {appointment.Id} не найдена");
             }
         }
+
+        public async Task CancelAppointment(Guid appointmentId, CancellationToken ct)
+        {
+            _appointments.RemoveAll(x => x.Id == appointmentId);
+
+            //сделаю искусственную задержку для асинхронности
+            await Task.Delay(1, ct);
+        }
     }
 }

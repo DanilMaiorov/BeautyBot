@@ -16,5 +16,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task<IReadOnlyList<Appointment>> GetActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<Appointment?> GetAppointment(Guid appointmentId, CancellationToken ct);
         Task UpdateAppointment(Appointment appointment, CancellationToken ct);
+        Task CancelAppointment(Guid appointmentId, CancellationToken ct);
     }
 }

@@ -41,7 +41,6 @@ namespace BeautyBot
 
             ITelegramBotClient _botClient = new ConsoleBotClient();
 
-
             using var cts = new CancellationTokenSource();
 
             IUserRepository userRepository = new InMemoryUserRepository();
@@ -72,8 +71,8 @@ namespace BeautyBot
             if (_updateHandler is UpdateHandler castHandler)
             {
                 //подписываюсь на события
-                //castHandler.OnHandleUpdateStarted += castHandler.HandleStart;
-                //castHandler.OnHandleUpdateCompleted += castHandler.HandleComplete;
+                castHandler.OnHandleUpdateStarted += castHandler.HandleStart;
+                castHandler.OnHandleUpdateCompleted += castHandler.HandleComplete;
 
                 try
                 {

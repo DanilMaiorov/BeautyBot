@@ -83,7 +83,7 @@ namespace BeautyBot.src
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
-            if (input.StartsWith("/add") || input.StartsWith("/removetask") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
+            if (input.StartsWith("/add") || input.StartsWith("/del") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
             {
                 if (input.StartsWith("/add "))
                 {
@@ -95,7 +95,7 @@ namespace BeautyBot.src
                 //    cutInput = input.Substring(6);
                 //    input = "/find";
                 //}
-                else if (input.StartsWith("/removetask ") || input.StartsWith("/updateappointment "))
+                else if (input.StartsWith("/del ") || input.StartsWith("/updateappointment "))
                 {
                     //верну данные кортежем
                     (string command, Guid taskGuid) inputData = Validate(input, taskGuid, currentUserAppointmentsList);
@@ -146,9 +146,9 @@ namespace BeautyBot.src
             //сохраню исходный ввод пользака
             string startInput = input;
 
-            if (input.StartsWith("/removetask "))
+            if (input.StartsWith("/del "))
             {
-                input = "/removetask";
+                input = "/del";
             }
             else
             {

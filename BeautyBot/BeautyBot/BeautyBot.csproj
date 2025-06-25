@@ -8,11 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\NailBotTG\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj" />
+    <Folder Include="src\BeautyBot.Tests\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="src\BeautyBot.Tests\" />
+    <ProjectReference Include="..\..\..\genzel\Desktop\Nail\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj" />
   </ItemGroup>
 
 </Project>

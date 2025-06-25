@@ -53,7 +53,15 @@ namespace BeautyBot.src.BeautyBot.Application.Services
 
             await _appointmentRepository.UpdateAppointment(udpateAppointment, ct);
         }
-        
+
+        public async Task CancelAppointment(Guid appointmentId, CancellationToken ct)
+        {
+            await _appointmentRepository.CancelAppointment(appointmentId, ct);
+        }
+
+
+
+
 
 
         //public IReadOnlyList<Appointment> GetUserAppointments(Guid userId) => _appointmentRepository.GetAllByUserId(userId);
