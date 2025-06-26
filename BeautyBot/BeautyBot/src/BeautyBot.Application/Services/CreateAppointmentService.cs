@@ -1,4 +1,5 @@
-﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
+﻿using BeautyBot.src.BeautyBot.Core.Enums;
+using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using System;
@@ -19,12 +20,12 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             await _createAppointmentTemplate.AddStep(procedure);
         }
 
-        public async Task AddStep(IProcedure procedure, DateTime date)
+        public async Task AddStep(IProcedure procedure, string date)
         {
             await _createAppointmentTemplate.AddStep(procedure, date);
         }
 
-        public async Task AddStep(IProcedure procedure, DateTime date, DateTime time)
+        public async Task AddStep(IProcedure procedure, string date, string time)
         {
             await _createAppointmentTemplate.AddStep(procedure, date, time);
         }
@@ -40,7 +41,10 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         }
 
 
-
+        public async Task RemoveStep()
+        {
+            await _createAppointmentTemplate.RemoveStep();
+        }
 
 
         public CreateAppointmentService(ICreateAppointmentTemplate createAppointmentTemplate)

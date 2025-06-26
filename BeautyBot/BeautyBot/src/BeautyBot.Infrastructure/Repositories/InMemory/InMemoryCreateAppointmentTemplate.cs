@@ -12,32 +12,32 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 {
     public class InMemoryCreateAppointmentTemplate : ICreateAppointmentTemplate
     {
-        private readonly List<CreateAppointmentTemplate> _createSteps = new List<CreateAppointmentTemplate>();
+        private readonly List<CreateAppointmentTemplate> _steps = new List<CreateAppointmentTemplate>();
 
         public async Task AddStep(IProcedure procedure)
         {
-            _createSteps.Add(new CreateAppointmentTemplate(procedure));
+            _steps.Add(new CreateAppointmentTemplate(procedure));
 
             await Task.Delay(1);
         }
 
-        public async Task AddStep(IProcedure procedure, DateTime date)
+        public async Task AddStep(IProcedure procedure, string date)
         {
-            _createSteps.Add(new CreateAppointmentTemplate(procedure, date));
+            _steps.Add(new CreateAppointmentTemplate(procedure, date));
 
             await Task.Delay(1);
         }
 
-        public async Task AddStep(IProcedure procedure, DateTime date, DateTime time)
+        public async Task AddStep(IProcedure procedure, string date, string time)
         {
-            _createSteps.Add(new CreateAppointmentTemplate(procedure, date, time));
+            _steps.Add(new CreateAppointmentTemplate(procedure, date, time));
 
             await Task.Delay(1);
         }
 
         public async Task<CreateAppointmentTemplate> GetStep()
         {
-            var lastStep = _createSteps.Last();
+            var lastStep = _steps.Last();
 
             await Task.Delay(1);
 
@@ -47,7 +47,13 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         public async Task<IReadOnlyList<CreateAppointmentTemplate>> GetSteps()
         {
             await Task.Delay(1);
-            return _createSteps;
+            return _steps;
+        }
+
+        public async Task RemoveStep()
+        {
+            await Task.Delay(1);
+            _steps.RemoveAt(_steps.Count - 1);
         }
     }
 }

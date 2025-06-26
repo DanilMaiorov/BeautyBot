@@ -73,13 +73,13 @@ namespace BeautyBot.src
         /// <param name="input">Ввод пользователя</param>
         /// <param name="currentUserAppointmentsList">Список записей юзера</param>
         /// <returns>Кортеж с данными по записи</returns>
-        public static (string, string, DateTime, DateTime, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        public static (string, string, string, string, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
         {
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
-            DateTime date = DateTime.MinValue;
-            DateTime time = DateTime.MinValue;
+            string date = "";
+            string time = "";
 
             if (input.StartsWith("/add") || input.StartsWith("/del") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
             {
@@ -88,11 +88,6 @@ namespace BeautyBot.src
                     cutInput = input.Substring(5);
                     input = "/add";
                 }
-                //else if (input.StartsWith("/find "))
-                //{
-                //    cutInput = input.Substring(6);
-                //    input = "/find";
-                //}
                 else if (input.StartsWith("/del ") || input.StartsWith("/updateappointment "))
                 {
                     //верну данные кортежем
@@ -138,12 +133,13 @@ namespace BeautyBot.src
 
 
                 case "1 января":
-                    input = "/date";
-                    date = new DateTime(2025, 1, 1);
+                    date = input;
+                    input = "/date"; 
                     break;
+
                 case "6 утра":
+                    time = input;
                     input = "/time";
-                    time = new DateTime(2025, 1, 1, 6, 0, 0);
                     break;
 
 

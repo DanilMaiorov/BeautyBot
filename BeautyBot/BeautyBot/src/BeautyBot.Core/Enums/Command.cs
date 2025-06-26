@@ -27,5 +27,7 @@
         Back,
         Date,
         Time,
+
+        Approve
     }
 }

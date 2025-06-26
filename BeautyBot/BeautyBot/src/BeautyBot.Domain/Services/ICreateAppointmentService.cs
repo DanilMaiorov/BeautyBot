@@ -11,8 +11,10 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
     public interface ICreateAppointmentService
     {
         Task AddStep(IProcedure procedure);
-        Task AddStep(IProcedure procedure, DateTime date);
-        Task AddStep(IProcedure procedure, DateTime date, DateTime time);
+        Task AddStep(IProcedure procedure, string date);
+        Task AddStep(IProcedure procedure, string date, string time);
+
+        Task RemoveStep();
 
         Task<CreateAppointmentTemplate> GetStep();
 

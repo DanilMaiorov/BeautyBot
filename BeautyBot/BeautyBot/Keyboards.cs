@@ -83,5 +83,31 @@ namespace BeautyBot
             ResizeKeyboard = true,    // Автоматическое изменение размера
             OneTimeKeyboard = false   // Остается открытой после использования
         };
+
+
+
+        public static readonly ReplyKeyboardMarkup approveDate = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton("Изменить дату"),
+                new KeyboardButton("Верно")
+            })
+        {
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
+
+
+
+        public static readonly ReplyKeyboardMarkup approveTime = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton("Изменить время"),
+                new KeyboardButton("Верно")
+            })
+        {
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
     }
 }
