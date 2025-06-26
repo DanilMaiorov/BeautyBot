@@ -12,7 +12,7 @@ namespace BeautyBot
     /// </summary>
     public static class Keyboards
     {
-        public static readonly ReplyKeyboardMarkup keyboardStart = new ReplyKeyboardMarkup(
+        public static readonly ReplyKeyboardMarkup start = new ReplyKeyboardMarkup(
             new[]
             {
                 new KeyboardButton("Старт")
@@ -21,13 +21,63 @@ namespace BeautyBot
             ResizeKeyboard = true,
             OneTimeKeyboard = true
         };
-        public static readonly ReplyKeyboardMarkup keyboardFirstStep = new ReplyKeyboardMarkup(
-            // Первый ряд (3 кнопки в ряд)
+
+
+        public static readonly ReplyKeyboardMarkup firstStep = new ReplyKeyboardMarkup(
             new[]
             {
-                new KeyboardButton("а тут чё?"),
                 new KeyboardButton("Посмотреть текущие записи"),
-                new KeyboardButton("Записаться на процедуру")
+                new KeyboardButton("Записаться")
+            })
+        {
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
+
+
+        public static readonly ReplyKeyboardMarkup secondStep = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton("Маникюр"),
+                new KeyboardButton("Педикюр"),
+                new KeyboardButton("Назад")
+            })
+        {
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
+
+
+        public static readonly ReplyKeyboardMarkup thirdStep = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton("френч"),
+                new KeyboardButton("гель-лак"),
+                new KeyboardButton("назад")
+            })
+        {
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
+
+        public static readonly ReplyKeyboardMarkup chooseDate = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton("1 января"),
+                new KeyboardButton("28 июня"),
+                new KeyboardButton("назад")
+            })
+        {
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
+
+        public static readonly ReplyKeyboardMarkup chooseTime = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton("6 утра"),
+                new KeyboardButton("14:88 дня"),
+                new KeyboardButton("назад")
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера

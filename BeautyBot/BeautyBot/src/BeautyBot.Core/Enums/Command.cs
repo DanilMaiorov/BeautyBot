@@ -19,6 +19,13 @@
         EditAppointment,
         UpdateAppointment,
         Report,
-        Exit
+        Exit,
+
+
+        Create,
+        Manicure,
+        Back,
+        Date,
+        Time,
     }
 }

@@ -14,15 +14,14 @@ namespace BeautyBot.src
         {
             switch (procedureName)
             {
-                case "френч":
+                case "french":
                     procedure = new FrenchManicure();
                     break;
-                case "гель":
+                case "gelpolish":
                     procedure = new GelPolishManicure();
                     break;
                 default:
-                    procedure = new FrenchManicure();
-                    break;
+                    throw new ArgumentException("Что-то пошло не так");
             }
 
             return procedure;

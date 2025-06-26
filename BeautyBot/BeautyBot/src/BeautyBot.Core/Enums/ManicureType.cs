@@ -3,12 +3,11 @@
     /// <summary>
     /// Список процедур
     /// </summary>
-    public enum Procedure
+    public enum ManicureType
     {
         None = 0,
-        Manicure = 1,
-        Pedicure = 2,
-        Brows = 3,
-        Lashes = 4,
+        Classic = 1,
+        French = 2,
+        GelPolish = 3,
     }
 }

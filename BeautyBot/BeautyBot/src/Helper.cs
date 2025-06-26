@@ -3,6 +3,7 @@ using System.Text;
 using BeautyBot.src.BeautyBot.Core.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BeautyBot.src
 {
@@ -72,16 +73,13 @@ namespace BeautyBot.src
         /// <param name="input">Ввод пользователя</param>
         /// <param name="currentUserAppointmentsList">Список записей юзера</param>
         /// <returns>Кортеж с данными по записи</returns>
-        public static (string, string, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        public static (string, string, DateTime, DateTime, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
         {
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
-
-
-
-
-
+            DateTime date = DateTime.MinValue;
+            DateTime time = DateTime.MinValue;
 
             if (input.StartsWith("/add") || input.StartsWith("/del") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
             {
@@ -114,11 +112,47 @@ namespace BeautyBot.src
                 case "Старт":
                     input = "/start";
                     break;
+
+                case "Записаться":
+                    input = "/create";
+                    break;
+
+
+                case "Маникюр":
+                    input = "/manicure";
+                    break;
+
+
+
+
+                case "френч":
+                    input = "/french";
+                    break;
+
+                case "гель-лак":
+                    input = "/gelPolish";
+                    break;
+
+
+
+
+
+                case "1 января":
+                    input = "/date";
+                    date = new DateTime(2025, 1, 1);
+                    break;
+                case "6 утра":
+                    input = "/time";
+                    time = new DateTime(2025, 1, 1, 6, 0, 0);
+                    break;
+
+
+
                 default:
                     break;
             }
 
-            return (input, cutInput, taskGuid);
+            return (input, cutInput, date, time, taskGuid);
         }
 
 

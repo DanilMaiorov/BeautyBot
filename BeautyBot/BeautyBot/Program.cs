@@ -15,7 +15,8 @@ namespace BeautyBot
     {
         static async Task Main(string[] args)
         {
-            string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
+            //string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
+            string token = "7512417913:AAHnoeWdDKNOyTuF0DMHpPVdO95imk0xMgw";
 
             if (string.IsNullOrEmpty(token))
             {
@@ -33,7 +34,10 @@ namespace BeautyBot
             using var cts = new CancellationTokenSource();
 
             IUserRepository userRepository = new InMemoryUserRepository();
+
             IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository();
+            //IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository(); ТУТ НУЖНО БУДЕТ ЗАМЕНИТЬ НА ХРАНЕНИЕ В ЛОКАЛЬНЫХ ФАЙЛАХ
+
             IProcedureDefinitionRepository procedureDefinitionRepository = new InMemoryProcedureDefinitionRepository();
 
             IUserService _userService = new UserService(userRepository);
@@ -45,11 +49,23 @@ namespace BeautyBot
             //добавить сервис для отчета
             //IToDoReportService _toDoReportService = new ToDoReportService(toDoRepository);
 
+
+            //ДЛЯ СОЗДАНИЯ ЗАПИСИ
+            ICreateAppointmentTemplate createAppointmentTemplate = new InMemoryCreateAppointmentTemplate();
+
+            ICreateAppointmentService _createAppointmentService = new CreateAppointmentService(createAppointmentTemplate);
+
+
+
+
+
             IUpdateHandler _updateHandler = new UpdateHandler(
                 _userService,
                 _appointmentService,
                 _procedureCatalogService,
                 _priceCalculationService,
+
+                _createAppointmentService,
                 cts.Token);
 
             if (_updateHandler is UpdateHandler castHandler)

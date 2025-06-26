@@ -6,6 +6,7 @@
     /// </summary>
     public enum UserRole
     {
+        None = 0,
         Owner,
         Admin,
         User
