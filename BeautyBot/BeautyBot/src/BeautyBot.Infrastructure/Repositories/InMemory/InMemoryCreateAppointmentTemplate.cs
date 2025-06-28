@@ -35,13 +35,14 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             await Task.Delay(1);
         }
 
-        public async Task<CreateAppointmentTemplate> GetStep()
+        public async Task<CreateAppointmentTemplate?> GetStep()
         {
-            var lastStep = _steps.Last();
+            if(_steps.Count > 0 )
+                return _steps.Last();
 
             await Task.Delay(1);
 
-            return lastStep;
+            return null;
         }
 
         public async Task<IReadOnlyList<CreateAppointmentTemplate>> GetSteps()

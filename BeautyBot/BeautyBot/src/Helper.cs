@@ -143,6 +143,14 @@ namespace BeautyBot.src
                     break;
 
 
+                case "Верно":
+                    input = "/approve";
+                    break;
+
+                case "назад":
+                    input = "/back";
+                    break;
+
 
                 default:
                     break;

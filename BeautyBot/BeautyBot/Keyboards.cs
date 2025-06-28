@@ -40,7 +40,7 @@ namespace BeautyBot
             {
                 new KeyboardButton("Маникюр"),
                 new KeyboardButton("Педикюр"),
-                new KeyboardButton("Назад")
+                new KeyboardButton("назад")
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера

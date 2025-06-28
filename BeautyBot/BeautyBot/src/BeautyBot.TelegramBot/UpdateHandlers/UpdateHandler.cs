@@ -194,8 +194,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         break;
 
                     case Command.Add:
-                        ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
-                        await _appointmentService.AddAppointment(currentUser, procedure, DateTime.Now, _ct);
+                        //ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
+                        //await _appointmentService.AddAppointment(currentUser, procedure, DateTime.Now, _ct);
                         break;
 
 
@@ -225,41 +225,75 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                     case Command.Manicure:
                         await botClient.SendMessage(currentChat, "Выберите маникюр", replyMarkup: Keyboards.thirdStep, cancellationToken: _ct);
+                        await _createAppointmentService.AddStep(new Manicure("", default, default), appointmentDate);
                         break;
-
-
-
-
 
                     case Command.Date:
 
                         currentStep = await _createAppointmentService.GetStep();
 
-                        await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: Keyboards.chooseTime, cancellationToken: _ct);
-
-
                         await _createAppointmentService.AddStep(currentStep.Procedure, appointmentDate);
 
-                        await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: Keyboards.chooseTime, cancellationToken: _ct);
+                        await botClient.SendMessage(currentChat, "Подтвердите дату", replyMarkup: Keyboards.approveDate, cancellationToken: _ct);
+
+                        //await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: Keyboards.chooseTime, cancellationToken: _ct);
+                        //await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: Keyboards.chooseTime, cancellationToken: _ct);
                         break;
                     case Command.Time:
 
-           
-
                         currentStep = await _createAppointmentService.GetStep();
+
                         await _createAppointmentService.AddStep(currentStep.Procedure, currentStep.AppointmentDate, appointmentTime);
+
+                        await botClient.SendMessage(currentChat, "Подтвердите время", replyMarkup: Keyboards.approveTime, cancellationToken: _ct);
+
                         break;
 
                     case Command.Back:
+
                         //currentStep = await _createAppointmentService.GetStep();
-                        await botClient.SendMessage(currentChat, "Выберите маникюр", replyMarkup: Keyboards.thirdStep, cancellationToken: _ct);
-                        return;
 
+                        if (steps.Count == 3)
+                        {
+                            await _createAppointmentService.RemoveStep();
+                            await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: Keyboards.chooseTime, cancellationToken: _ct);
+                        }
+                        else if (steps.Count == 2)
+                        {
+                            await _createAppointmentService.RemoveStep();
+                            await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: Keyboards.chooseDate, cancellationToken: _ct);
+                        }
+                        else if (steps.Count == 1)
+                        {
+                            await _createAppointmentService.RemoveStep();
+                            await botClient.SendMessage(currentChat, "Куда записываемся?", replyMarkup: Keyboards.secondStep, cancellationToken: _ct);
+                        }
+                        else
+                        {
+                            await botClient.SendMessage(currentChat, "Что хотите сделать?", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
+                        }
 
+                        break;
 
 
                     case Command.Approve:
 
+                        currentStep = await _createAppointmentService.GetStep();
+
+                        if (steps.Count == 3)
+                        {
+                            await _appointmentService.AddAppointment(currentUser, currentStep.Procedure, DateTime.Now, _ct);
+
+                            await botClient.SendMessage(currentChat, "Вы успешно записаны", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
+                        }
+                        else if (steps.Count == 2)
+                        {
+                            await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: Keyboards.chooseTime, cancellationToken: _ct);
+                        }
+                        else if (steps.Count == 1)
+                        {
+                            await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: Keyboards.chooseDate, cancellationToken: _ct);
+                        }
 
                         break;
 
