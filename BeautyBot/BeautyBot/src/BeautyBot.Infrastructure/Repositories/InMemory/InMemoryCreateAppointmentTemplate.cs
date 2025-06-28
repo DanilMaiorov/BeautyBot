@@ -56,5 +56,11 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             await Task.Delay(1);
             _steps.RemoveAt(_steps.Count - 1);
         }
+
+        public async Task RefreshSteps()
+        {
+            await Task.Delay(1);
+            _steps.Clear();
+        }
     }
 }

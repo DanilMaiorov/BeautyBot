@@ -19,5 +19,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task<CreateAppointmentTemplate> GetStep();
 
         Task<IReadOnlyList<CreateAppointmentTemplate>> GetSteps();
+
+        Task RefreshSteps();
     }
 }

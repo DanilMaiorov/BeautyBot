@@ -46,6 +46,11 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             await _createAppointmentTemplate.RemoveStep();
         }
 
+        public async Task RefreshSteps()
+        {
+            await _createAppointmentTemplate.RefreshSteps();
+        }
+
 
         public CreateAppointmentService(ICreateAppointmentTemplate createAppointmentTemplate)
         {

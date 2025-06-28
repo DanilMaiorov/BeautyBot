@@ -28,6 +28,9 @@
         Date,
         Time,
 
+        ChangeDate,
+        ChangeTime,
+
         Approve
     }
 }
