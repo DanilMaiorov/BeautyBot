@@ -4,6 +4,7 @@ using BeautyBot.src.BeautyBot.Core.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
+using System.Globalization;
 
 namespace BeautyBot.src
 {
@@ -73,11 +74,12 @@ namespace BeautyBot.src
         /// <param name="input">Ввод пользователя</param>
         /// <param name="currentUserAppointmentsList">Список записей юзера</param>
         /// <returns>Кортеж с данными по записи</returns>
-        public static (string, string, string, string, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        public static async (string, string, string, string, string, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
         {
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
+            string month = "";
             string date = "";
             string time = "";
 
@@ -102,6 +104,37 @@ namespace BeautyBot.src
                 }
             }
 
+
+
+
+            if (input.StartsWith("day_selected_"))
+            {
+                date = GetFormattedMonthDateTime(input);
+                input = "/date";
+            }
+
+            if (input.StartsWith("time_selected_"))
+            {
+                time = GetFormattedMonthDateTime(input);
+                input = "/time";
+            }
+
+            if (input.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || input.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase))
+            {
+                month = GetFormattedMonthDateTime(input);
+                input = "/changemonth";
+
+            }
+            //// Обработка других кнопок (дни недели, пустые дни, отключенные дни, отображение месяца)
+            //else
+            //{
+            //    // Просто закрываем всплывающее уведомление, так как эти кнопки не требуют других действий
+            //    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+            //}
+            
+
+
+
             switch (input)
             {
                 case "Старт":
@@ -113,29 +146,40 @@ namespace BeautyBot.src
                     break;
 
 
+
+
                 case "Маникюр":
                     input = "/manicure";
                     break;
 
+                case "Педикюр":
+                    input = "/pedicure";
+                    break;
 
 
 
-                case "френч":
+
+                case "Френч":
                     input = "/french";
                     break;
 
-                case "гель-лак":
+                case "Гель-лак":
                     input = "/gelPolish";
                     break;
 
+                case "Классический":
+                    input = "/classic";
+                    break;
 
 
 
 
                 case "1 января":
                     date = input;
-                    input = "/date"; 
+                    input = "/date";
                     break;
+
+
 
                 case "6 утра":
                     time = input;
@@ -147,7 +191,7 @@ namespace BeautyBot.src
                     input = "/approve";
                     break;
 
-                case "назад":
+                case "Назад":
                     input = "/back";
                     break;
 
@@ -155,10 +199,9 @@ namespace BeautyBot.src
                 default:
                     break;
             }
-
-            return (input, cutInput, date, time, taskGuid);
+            await Task.Delay(1);
+            return (input, cutInput, month, date, time, taskGuid);
         }
-
 
 
         /// <summary>
@@ -181,6 +224,35 @@ namespace BeautyBot.src
 
                 //тут надо попробовать выводить запись вместе с кнопками разными сообщениями
                 //await botClient.SendMessage(chat, $"\n{appointment.Id}", ct);
+            }
+        }
+
+
+        public static string GetFormattedMonthDateTime(string callbackData)
+        {
+            if (!callbackData.StartsWith("day_selected_", StringComparison.OrdinalIgnoreCase) ||
+                !callbackData.StartsWith("time_selected_", StringComparison.OrdinalIgnoreCase) ||
+                !callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) ||
+                !callbackData.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase) 
+                )
+            {
+                return "Неверный формат данных";
+            }
+
+            string dateString = callbackData.Replace("day_selected_", "");
+            string timeString = callbackData.Replace("time_selected_", "");
+            string prevMonthString = callbackData.Replace("prev_month_", "");
+            string nextMonthString = callbackData.Replace("next_month_", "");
+
+
+            // Пытаемся распарсить строку даты
+            if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
+            {
+                return date.ToString("dd MMMM", CultureInfo.CurrentCulture);
+            }
+            else
+            {
+                return "Ошибка парсинга даты";
             }
         }
 

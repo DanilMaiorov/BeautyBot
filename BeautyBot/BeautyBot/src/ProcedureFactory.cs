@@ -20,6 +20,15 @@ namespace BeautyBot.src
                 case "gelpolish":
                     procedure = new GelPolishManicure();
                     break;
+                case "classic":
+                    procedure = new ClassicManicure();
+                    break;
+                case "french1":
+                    procedure = new GelPolishPedicure();
+                    break;
+                case "classic1":
+                    procedure = new ClassicPedicure();
+                    break;
                 default:
                     throw new ArgumentException("Что-то пошло не так");
             }

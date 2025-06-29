@@ -40,7 +40,7 @@ namespace BeautyBot
             {
                 new KeyboardButton("Маникюр"),
                 new KeyboardButton("Педикюр"),
-                new KeyboardButton("назад")
+                new KeyboardButton("Назад")
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -48,12 +48,25 @@ namespace BeautyBot
         };
 
 
-        public static readonly ReplyKeyboardMarkup thirdStep = new ReplyKeyboardMarkup(
+        public static readonly ReplyKeyboardMarkup thirdManicureStep = new ReplyKeyboardMarkup(
             new[]
             {
-                new KeyboardButton("френч"),
-                new KeyboardButton("гель-лак"),
-                new KeyboardButton("назад")
+                new KeyboardButton("Гель-лак"),
+                new KeyboardButton("Френч"),
+                new KeyboardButton("Классический"),
+                new KeyboardButton("Назад")
+            })
+        {
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
+
+        public static readonly ReplyKeyboardMarkup thirdPedicureStep = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton("Гель-лак"),
+                new KeyboardButton("Классический"),
+                new KeyboardButton("Назад")
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -65,7 +78,7 @@ namespace BeautyBot
             {
                 new KeyboardButton("1 января"),
                 new KeyboardButton("28 июня"),
-                new KeyboardButton("назад")
+                new KeyboardButton("Назад")
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -109,5 +122,97 @@ namespace BeautyBot
             ResizeKeyboard = true,    // Автоматическое изменение размера
             OneTimeKeyboard = false   // Остается открытой после использования
         };
+
+
+
+        //    public static InlineKeyboardMarkup dates = new InlineKeyboardMarkup()
+
+
+
+
+        //        //    var firstDayOfMonth = new DateTime(date.Year, date.Month, 1);
+        //        //    var daysInMonth = DateTime.DaysInMonth(date.Year, date.Month);
+        //        //    var dayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+
+
+
+        //}
+
+
+        public static InlineKeyboardMarkup dates = new InlineKeyboardMarkup(
+
+            //CalendarGenerator.GenerateCalendar(DateTime.Now)
+        );
     }
 }
+
+
+//public InlineKeyboardMarkup CreateDynamicKeyboard(List<NailService> services)
+//{
+//    var buttons = new List<IEnumerable<InlineKeyboardButton>>();
+
+//    // Группируем по 2 кнопки в ряд
+//    for (int i = 0; i < services.Count; i += 2)
+//    {
+//        var row = services
+//            .Skip(i)
+//            .Take(2)
+//            .Select(s => InlineKeyboardButton.WithCallbackData(s.Name, s.Id.ToString()))
+//            .ToArray();
+
+//        buttons.Add(row);
+//    }
+
+//    // Добавляем кнопку отмены
+//    buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Отмена", "cancel") });
+
+//    return new InlineKeyboardMarkup(buttons);
+//}
+
+
+//public ReplyKeyboardMarkup GenerateCalendarKeyboard(DateTime date)
+//{
+//    var firstDayOfMonth = new DateTime(date.Year, date.Month, 1);
+//    var daysInMonth = DateTime.DaysInMonth(date.Year, date.Month);
+//    var dayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+
+//    var buttons = new List<KeyboardButton[]>();
+
+//    // Заголовок
+//    buttons.Add(new[] { KeyboardButton.WithText($"Выберите день - {date:MMMM yyyy}") });
+
+//    // Дни недели (опционально)
+//    buttons.Add(Enum.GetValues(typeof(DayOfWeek))
+//        .Cast<DayOfWeek>()
+//        .Select(d => KeyboardButton.WithText(d.ToString().Substring(0, 2)))
+//        .ToArray());
+
+//    // Генерация дней
+//    var dayButtons = new List<KeyboardButton>();
+//    // Пустые кнопки для первого ряда
+//    for (int i = 0; i < dayOfWeek; i++)
+//    {
+//        dayButtons.Add(KeyboardButton.WithText(" "));
+//    }
+
+//    for (int day = 1; day <= daysInMonth; day++)
+//    {
+//        dayButtons.Add(KeyboardButton.WithText(day.ToString()));
+
+//        if ((day + dayOfWeek) % 7 == 0 || day == daysInMonth)
+//        {
+//            buttons.Add(dayButtons.ToArray());
+//            dayButtons.Clear();
+//        }
+//    }
+
+//    // Кнопки навигации
+//    buttons.Add(new[]
+//    {
+//        KeyboardButton.WithText("<"),
+//        KeyboardButton.WithText("Сегодня"),
+//        KeyboardButton.WithText(">")
+//    });
+
+//    return new ReplyKeyboardMarkup(buttons) { ResizeKeyboard = true };
+//}

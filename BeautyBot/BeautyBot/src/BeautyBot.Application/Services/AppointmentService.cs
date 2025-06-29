@@ -18,7 +18,7 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         }
 
         // реализация метода интерфейса Add
-        public async Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateTime appointmentTime, CancellationToken ct)
+        public async Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, string appointmentTime, CancellationToken ct)
         {
             //var tasks = await GetAllByUserId(user.UserId, ct);
             //if (tasks.Count >= maxTaskAmount)
@@ -27,7 +27,7 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             //написать метод проверки дубликатов добавленных записей
             //Helper.CheckDuplicate(newTask, tasks);
 
-            var newAppointment = new Appointment(user.UserId, procedure, DateTime.Now);
+            var newAppointment = new Appointment(user.UserId, procedure, appointmentTime);
 
             await _appointmentRepository.Add(newAppointment, ct);
 

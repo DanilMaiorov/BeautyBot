@@ -1,7 +1,7 @@
 ﻿namespace BeautyBot.src.BeautyBot.Core.Enums
 {
     /// <summary>
-    /// Список процедур
+    /// Типы маникюра
     /// </summary>
     public enum ManicureType
     {

@@ -23,10 +23,19 @@
 
 
         Create,
+
+
+
         Manicure,
+        Pedicure,
+        Classic,
+
+
+
         Back,
         Date,
         Time,
+        Changemonth,
 
         ChangeDate,
         ChangeTime,

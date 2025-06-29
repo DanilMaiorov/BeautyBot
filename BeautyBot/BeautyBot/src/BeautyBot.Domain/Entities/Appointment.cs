@@ -10,10 +10,10 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         public IProcedure Procedure { get; set; } // храню интерфейс или конкретный класс
         public DateTime CreatedAt { get; set; }
         public DateTime StateChangedAt { get; set; }
-        public DateTime AppointmentTime { get; set; }
+        public string AppointmentTime { get; set; }
         public AppointmentState State { get; set; } // Active, Completed, Cancelled
 
-        public Appointment(Guid userId, IProcedure procedure, DateTime appointmentTime)
+        public Appointment(Guid userId, IProcedure procedure, string appointmentTime)
         {
             Id = Guid.NewGuid();
             UserId = userId;
