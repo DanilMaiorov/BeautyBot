@@ -74,7 +74,7 @@ namespace BeautyBot.src
         /// <param name="input">Ввод пользователя</param>
         /// <param name="currentUserAppointmentsList">Список записей юзера</param>
         /// <returns>Кортеж с данными по записи</returns>
-        public static async (string, string, string, string, string, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        public static (string, string, string, string, string, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
         {
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
@@ -199,7 +199,6 @@ namespace BeautyBot.src
                 default:
                     break;
             }
-            await Task.Delay(1);
             return (input, cutInput, month, date, time, taskGuid);
         }
 
@@ -230,19 +229,21 @@ namespace BeautyBot.src
 
         public static string GetFormattedMonthDateTime(string callbackData)
         {
-            if (!callbackData.StartsWith("day_selected_", StringComparison.OrdinalIgnoreCase) ||
-                !callbackData.StartsWith("time_selected_", StringComparison.OrdinalIgnoreCase) ||
-                !callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) ||
+            var s = "";
+            if (!callbackData.StartsWith("day_selected_", StringComparison.OrdinalIgnoreCase) &&
+                !callbackData.StartsWith("time_selected_", StringComparison.OrdinalIgnoreCase) &&
+                !callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) &&
                 !callbackData.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase) 
                 )
+                s = callbackData.Replace("day_selected_", "");
+                s = callbackData.Replace("time_selected_", "");
+                s = callbackData.Replace("prev_month_", "");
+                s = callbackData.Replace("next_month_", "");
             {
                 return "Неверный формат данных";
             }
 
-            string dateString = callbackData.Replace("day_selected_", "");
-            string timeString = callbackData.Replace("time_selected_", "");
-            string prevMonthString = callbackData.Replace("prev_month_", "");
-            string nextMonthString = callbackData.Replace("next_month_", "");
+
 
 
             // Пытаемся распарсить строку даты
