@@ -14,7 +14,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task AddStep(IProcedure procedure, string date);
         Task AddStep(IProcedure procedure, string date, string time);
         Task<CreateAppointmentTemplate?> GetStep();
-        Task<IReadOnlyList<CreateAppointmentTemplate>> GetSteps();
+        Task<List<CreateAppointmentTemplate>> GetSteps();
 
         Task RemoveStep();
 

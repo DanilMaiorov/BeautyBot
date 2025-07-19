@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BeautyBot.src.BeautyBot.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,7 @@ namespace BeautyBot
         public static readonly ReplyKeyboardMarkup start = new ReplyKeyboardMarkup(
             new[]
             {
-                new KeyboardButton("Старт")
+                new KeyboardButton(Constants.Start)
             })
         {
             ResizeKeyboard = true,
@@ -27,7 +28,7 @@ namespace BeautyBot
             new[]
             {
                 new KeyboardButton("Посмотреть текущие записи"),
-                new KeyboardButton("Записаться")
+                new KeyboardButton(Constants.ToDoAppointment)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -40,7 +41,7 @@ namespace BeautyBot
             {
                 new KeyboardButton("Маникюр"),
                 new KeyboardButton("Педикюр"),
-                new KeyboardButton("Назад")
+                new KeyboardButton(Constants.Back)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -54,7 +55,7 @@ namespace BeautyBot
                 new KeyboardButton("Гель-лак"),
                 new KeyboardButton("Френч"),
                 new KeyboardButton("Классический"),
-                new KeyboardButton("Назад")
+                new KeyboardButton(Constants.Back)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -66,7 +67,7 @@ namespace BeautyBot
             {
                 new KeyboardButton("Гель-лак"),
                 new KeyboardButton("Классический"),
-                new KeyboardButton("Назад")
+                new KeyboardButton(Constants.Back)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -78,7 +79,7 @@ namespace BeautyBot
             {
                 new KeyboardButton("1 января"),
                 new KeyboardButton("28 июня"),
-                new KeyboardButton("Назад")
+                new KeyboardButton(Constants.Back)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -90,12 +91,14 @@ namespace BeautyBot
             {
                 new KeyboardButton("6 утра"),
                 new KeyboardButton("14:88 дня"),
-                new KeyboardButton("назад")
+                new KeyboardButton(Constants.Back)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
             OneTimeKeyboard = false   // Остается открытой после использования
         };
+
+        //привести к нижнему регистру черкз String.To
 
 
 
@@ -103,7 +106,7 @@ namespace BeautyBot
             new[]
             {
                 new KeyboardButton("Изменить дату"),
-                new KeyboardButton("Верно")
+                new KeyboardButton(Constants.Accept)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера
@@ -116,7 +119,7 @@ namespace BeautyBot
             new[]
             {
                 new KeyboardButton("Изменить время"),
-                new KeyboardButton("Верно")
+                new KeyboardButton(Constants.Accept)
             })
         {
             ResizeKeyboard = true,    // Автоматическое изменение размера

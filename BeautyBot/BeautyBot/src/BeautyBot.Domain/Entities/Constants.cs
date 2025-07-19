@@ -1,0 +1,86 @@
+﻿using BeautyBot.src.BeautyBot.Application.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BeautyBot.src.BeautyBot.Domain.Entities
+{
+    public static class Constants
+    {
+        /// <summary>
+        /// Нейминги кнопок
+        /// </summary>
+        public const string Start = "Старт";
+        public const string Accept = "Верно";
+        public const string Back = "Назад";
+
+        public const string ToDoAppointment = "Записаться";
+
+
+        //public const string Back = "Назад";
+        //public const string Back = "Назад";
+        //public const string Back = "Назад";
+        //public const string Back = "Назад";
+        //public const string Back = "Назад";
+        //public const string Back = "Назад";
+
+        public static readonly List<AppointmentStepConfig> StepsConfigManicure = new()
+        {
+            new() {
+                Message = "Что хотите сделать?",
+                Keyboard = Keyboards.firstStep
+            },
+            new() {
+                Message = "Куда записываемся?",
+                Keyboard = Keyboards.secondStep
+            },
+            new() {
+                Message = "Выберите маникюр",
+                Keyboard = Keyboards.thirdManicureStep
+            },
+            new() {
+                Message = "Выберите дату",
+                Keyboard = Keyboards.chooseDate
+            },
+            new() {
+                Message = "Выберите время",
+                Keyboard = Keyboards.chooseTime
+            },
+            new() {
+                Message = "Выберите время",
+                Keyboard = Keyboards.chooseTime
+            }
+        };
+
+        public static readonly List<AppointmentStepConfig> StepsConfigPedicure = new()
+        {
+            new() {
+                Message = "Что хотите сделать?",
+                Keyboard = Keyboards.firstStep
+            },
+            new() {
+                Message = "Куда записываемся?",
+                Keyboard = Keyboards.secondStep
+            },
+            new() {
+                Message = "Выберите педикюр",
+                Keyboard = Keyboards.thirdPedicureStep
+            },
+            new() {
+                Message = "Выберите дату",
+                Keyboard = Keyboards.chooseDate
+            },
+            new() {
+                Message = "Выберите время",
+                Keyboard = Keyboards.chooseTime
+            },
+            new() {
+                Message = "Выберите время",
+                Keyboard = Keyboards.chooseTime
+            }
+        };
+    }
+}
+

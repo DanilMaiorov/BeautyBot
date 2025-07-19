@@ -35,7 +35,7 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             return await _createAppointmentTemplate.GetStep();
         }
 
-        public async Task<IReadOnlyList<CreateAppointmentTemplate>> GetSteps()
+        public async Task<List<CreateAppointmentTemplate>> GetSteps()
         {
             return await _createAppointmentTemplate.GetSteps();
         }

@@ -45,7 +45,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             return null;
         }
 
-        public async Task<IReadOnlyList<CreateAppointmentTemplate>> GetSteps()
+        public async Task<List<CreateAppointmentTemplate>> GetSteps()
         {
             await Task.Delay(1);
             return _steps;

@@ -83,46 +83,47 @@ namespace BeautyBot.src
             string date = "";
             string time = "";
 
-            if (input.StartsWith("/add") || input.StartsWith("/del") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
-            {
-                if (input.StartsWith("/add "))
-                {
-                    cutInput = input.Substring(5);
-                    input = "/add";
-                }
-                else if (input.StartsWith("/del ") || input.StartsWith("/updateappointment "))
-                {
-                    //верну данные кортежем
-                    (string command, Guid taskGuid) inputData = Validate(input, taskGuid, currentUserAppointmentsList);
+            var inputLower = input.ToLower();
 
-                    input = inputData.command;
-                    taskGuid = inputData.taskGuid;
-                }
-                else
-                {
-                    input = "unregistered user command";
-                }
+            //if (input.StartsWith("/add") || input.StartsWith("/del") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
+            //{
+            //    if (input.StartsWith("/add "))
+            //    {
+            //        cutInput = input.Substring(5);
+            //        input = "/add";
+            //    }
+            //    else if (input.StartsWith("/del ") || input.StartsWith("/updateappointment "))
+            //    {
+            //        //верну данные кортежем
+            //        (string command, Guid taskGuid) inputData = Validate(input, taskGuid, currentUserAppointmentsList);
+
+            //        input = inputData.command;
+            //        taskGuid = inputData.taskGuid;
+            //    }
+            //    else
+            //    {
+            //        input = "unregistered user command";
+            //    }
+            //}
+
+
+
+
+            if (inputLower.StartsWith("day_selected_"))
+            {
+                date = GetFormattedMonthDateTime(inputLower);
+                inputLower = "/date";
+            } 
+            else if (inputLower.StartsWith("time_selected_"))
+            {
+                time = GetFormattedMonthDateTime(inputLower);
+                inputLower = "/time";
             }
 
-
-
-
-            if (input.StartsWith("day_selected_"))
+            else if (inputLower.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || inputLower.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase))
             {
-                date = GetFormattedMonthDateTime(input);
-                input = "/date";
-            }
-
-            if (input.StartsWith("time_selected_"))
-            {
-                time = GetFormattedMonthDateTime(input);
-                input = "/time";
-            }
-
-            if (input.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || input.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase))
-            {
-                month = GetFormattedMonthDateTime(input);
-                input = "/changemonth";
+                month = GetFormattedMonthDateTime(inputLower);
+                inputLower = "/changemonth";
 
             }
             //// Обработка других кнопок (дни недели, пустые дни, отключенные дни, отображение месяца)
@@ -131,75 +132,117 @@ namespace BeautyBot.src
             //    // Просто закрываем всплывающее уведомление, так как эти кнопки не требуют других действий
             //    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
             //}
-            
 
-
-
-            switch (input)
+            switch (inputLower)
             {
-                case "Старт":
-                    input = "/start";
+                case "старт":
+                    inputLower = "/start";
                     break;
 
-                case "Записаться":
-                    input = "/create";
-                    break;
-
-
-
-
-                case "Маникюр":
-                    input = "/manicure";
-                    break;
-
-                case "Педикюр":
-                    input = "/pedicure";
+                case "записаться":
+                    inputLower = "/create";
                     break;
 
 
 
 
-                case "Френч":
-                    input = "/french";
+                case "маникюр":
+                    inputLower = "/manicure";
                     break;
 
-                case "Гель-лак":
-                    input = "/gelPolish";
+                case "педикюр":
+                    inputLower = "/pedicure";
                     break;
 
-                case "Классический":
-                    input = "/classic";
+
+
+
+                case "френч":
+                    inputLower = "/french";
+                    break;
+
+                case "гель-лак":
+                    inputLower = "/gelPolish";
+                    break;
+
+                case "классический":
+                    inputLower = "/classic";
                     break;
 
 
 
 
                 case "1 января":
-                    date = input;
-                    input = "/date";
+                    date = inputLower;
+                    inputLower = "/date";
                     break;
 
 
 
                 case "6 утра":
-                    time = input;
-                    input = "/time";
+                    time = inputLower;
+                    inputLower = "/time";
                     break;
 
 
-                case "Верно":
-                    input = "/approve";
+                case "верно":
+                    inputLower = "/approve";
                     break;
 
-                case "Назад":
-                    input = "/back";
+                case "назад":
+                    inputLower = "/back";
                     break;
 
 
                 default:
                     break;
             }
-            return (input, cutInput, month, date, time, taskGuid);
+            return (inputLower, cutInput, month, date, time, taskGuid);
+        }
+
+
+        public static string GetFormattedMonthDateTime(string callbackData)
+        {
+            if (!callbackData.StartsWith("day_selected_", StringComparison.OrdinalIgnoreCase) &&
+                !callbackData.StartsWith("time_selected_", StringComparison.OrdinalIgnoreCase) &&
+                !callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) &&
+                !callbackData.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase)
+                )
+
+            {
+                return "Неверный формат данных";
+            }
+
+            var dateFromCallback = callbackData.Split("_");
+
+            var formattedDate = "";
+
+
+            // Пытаемся распарсить строку даты
+            if (DateTime.TryParseExact(dateFromCallback[dateFromCallback.Length - 1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
+            {
+                switch (dateFromCallback[0])
+                {
+                    case "day":
+                        formattedDate = date.ToString("dd MMMM", CultureInfo.CurrentCulture);
+                        break;
+                    case "time":
+                        formattedDate = date.ToString("dd MMMM", CultureInfo.CurrentCulture);
+                        break;
+                    case "next":
+                    case "prev":
+                        formattedDate = date.ToString("MM", CultureInfo.CurrentCulture);
+                        break;
+                    default:
+                        break;
+                }
+
+                return formattedDate;
+            }
+            else
+            {
+                return "Ошибка парсинга даты";
+            }
         }
 
 
@@ -227,35 +270,7 @@ namespace BeautyBot.src
         }
 
 
-        public static string GetFormattedMonthDateTime(string callbackData)
-        {
-            var s = "";
-            if (!callbackData.StartsWith("day_selected_", StringComparison.OrdinalIgnoreCase) &&
-                !callbackData.StartsWith("time_selected_", StringComparison.OrdinalIgnoreCase) &&
-                !callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) &&
-                !callbackData.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase) 
-                )
-                s = callbackData.Replace("day_selected_", "");
-                s = callbackData.Replace("time_selected_", "");
-                s = callbackData.Replace("prev_month_", "");
-                s = callbackData.Replace("next_month_", "");
-            {
-                return "Неверный формат данных";
-            }
 
-
-
-
-            // Пытаемся распарсить строку даты
-            if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
-            {
-                return date.ToString("dd MMMM", CultureInfo.CurrentCulture);
-            }
-            else
-            {
-                return "Ошибка парсинга даты";
-            }
-        }
 
 
 

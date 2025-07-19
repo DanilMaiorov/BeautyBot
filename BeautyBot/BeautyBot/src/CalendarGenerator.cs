@@ -35,11 +35,10 @@ public static class CalendarGenerator
         int offset = ((int)firstDayOfMonth.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
 
         var currentRow = new List<InlineKeyboardButton>();
+
         // Add empty buttons for the days before the first day of the month
         for (int i = 0; i < offset; i++)
-        {
             currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
-        }
 
         for (int day = 1; day <= daysInMonth; day++)
         {
@@ -57,11 +56,7 @@ public static class CalendarGenerator
             }
             else
             {
-                // Disable days outside the 60-day window or past days
-                currentRow.Add(InlineKeyboardButton.WithCallbackData(
-                    day.ToString(),
-                    $"{day} {displayMonth.ToString("dd MM", CultureInfo.CurrentCulture)}"
-                ));
+                currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
             }
 
             if (currentRow.Count == 7)
@@ -70,14 +65,12 @@ public static class CalendarGenerator
                 currentRow = new List<InlineKeyboardButton>();
             }
         }
-
         // Add remaining empty buttons for the last row
         if (currentRow.Any())
         {
             while (currentRow.Count < 7)
-            {
                 currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
-            }
+            
             keyboardButtons.Add(currentRow);
         }
 
