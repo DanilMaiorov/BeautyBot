@@ -281,13 +281,10 @@ namespace BeautyBot.src
             string startInput = input;
 
             if (input.StartsWith("/del "))
-            {
                 input = "/del";
-            }
             else
-            {
                 input = "/updateappointment";
-            }
+            
 
             if (appointmentsList.Count != 0)
             {
@@ -303,6 +300,30 @@ namespace BeautyBot.src
                 return (input, taskGuid);
             }
             return (input, taskGuid);
+        }
+
+
+
+
+
+
+
+
+
+        /// <summary>
+        /// Парсит строку в значение указанного enum, игнорируя регистр. 
+        /// Возвращает defaultValue, если парсинг не удался или строка пустая.
+        /// </summary>
+        /// <typeparam name="T">Тип enum</typeparam>
+        /// <param name="value">Строка для парсинга</param>
+        /// <param name="defaultValue">Значение по умолчанию</param>
+        /// <returns>Значение enum или defaultValue</returns>
+        public static T GetEnumValueOrDefault<T>(string value, T defaultValue) where T : struct, Enum
+        {
+            if (string.IsNullOrEmpty(value))
+                return defaultValue;
+
+            return Enum.TryParse<T>(value, true, out var result) ? result : defaultValue;
         }
     }
 }

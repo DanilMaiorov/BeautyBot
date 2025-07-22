@@ -102,22 +102,41 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 input = inputCommand.Replace("/", string.Empty);
 
 
-                //объявление типа данных команды
-                Command command;
+                //проверка списка с шагами записи
+                var steps = await _createAppointmentService.GetSteps();
 
-                if (Enum.TryParse<Command>(input, true, out var result))
-                    command = result;
-                else
-                    command = default;
+                //текущий шаг
+                CreateAppointmentTemplate currentStep = await _createAppointmentService.GetStep();
 
+                if (steps.Count < 0)
+                    throw new ApplicationException("Недопустимое значение количество шагов");
 
-                //объявление типа данных типа маникюра
-                ManicureType manicureType;
+                //первый шаг создания записи
+                if (currentStep != null)
+                {
+                    ManicureType manicureType = ManicureType.None;
+                    PedicureType pedicureType = PedicureType.None;
 
-                if (Enum.TryParse<ManicureType>(input, true, out var type))
-                    manicureType = type;
-                else
-                    manicureType = default;
+                    if (currentStep.Procedure is Pedicure)
+                        pedicureType = Helper.GetEnumValueOrDefault(input, pedicureType);
+
+                    if (currentStep.Procedure is Manicure)
+                        manicureType = Helper.GetEnumValueOrDefault(input, manicureType);
+
+                    if (manicureType != ManicureType.None || pedicureType != PedicureType.None)
+                    {
+                        var procedure = ProcedureFactory.CreateProcedure(input, currentStep.Procedure);
+
+                        await _createAppointmentService.AddStep(procedure);
+
+                        var calendarMarkup = CalendarGenerator.GenerateCalendar(DateTime.Today);
+
+                        await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
+
+                        return;
+                    }
+                }
+
 
 
 
@@ -127,41 +146,28 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 OnHandleUpdateCompleted?.Invoke(eventMessage);
 
 
-                switch (manicureType)
-                {
-                    case ManicureType.None:
-                        break;
-
-                    default:
-                        ProcedureFactory.CreateProcedure(input, out IProcedure procedure);
-
-                        await _createAppointmentService.AddStep(procedure);
-
-                        var calendarMarkup = CalendarGenerator.GenerateCalendar(DateTime.Today);
-
-                        await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
-
-                        return;
-                }
-
-                //проверка списка с шагами записи
-                var steps = await _createAppointmentService.GetSteps();
-
-                CreateAppointmentTemplate currentStep = await _createAppointmentService.GetStep();
 
 
-                if (steps.Count < 0)
-                    throw new ApplicationException("Недопустимое значение количество шагов");
 
 
+
+
+                //объявление типа данных команды
+                Command command;
+
+                if (Enum.TryParse<Command>(input, true, out var result))
+                    command = result;
+                else
+                    command = default;
+
+                Helper.GetEnumValueOrDefault(input, command);
                 //обработка основных команд
                 switch (command)
                 {
                     case Command.Start:
                         if (currentUser == null)
-                        {
                             currentUser = await _userService.RegisterUser(telegramCurrentUserId, telegramCurrentUserName, _ct);
-                        }
+                        
                         await botClient.SendMessage(currentChat, "Спасибо за регистрацию", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
                         //await Helper.CommandsRender(currentChat, botClient, _ct);
                         break;
@@ -357,22 +363,22 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 OnHandleUpdateCompleted?.Invoke(eventMessage);
 
 
-                switch (manicureType)
-                {
-                    case ManicureType.None:
-                        break;
+                //switch (manicureType)
+                //{
+                //    case ManicureType.None:
+                //        break;
 
-                    default:
-                        ProcedureFactory.CreateProcedure(input, out IProcedure procedure);
+                //    default:
+                //        ProcedureFactory.CreateProcedure(input, out IProcedure procedure);
 
-                        await _createAppointmentService.AddStep(procedure);
+                //        await _createAppointmentService.AddStep(procedure);
 
-                        var calendarMarkup = CalendarGenerator.GenerateCalendar(DateTime.Today);
+                //        var calendarMarkup = CalendarGenerator.GenerateCalendar(DateTime.Today);
 
-                        await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
+                //        await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
 
-                        return;
-                }
+                //        return;
+                //}
 
                 //проверка списка с шагами записи
                 var steps = await _createAppointmentService.GetSteps();
