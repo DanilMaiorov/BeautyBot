@@ -111,17 +111,24 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 if (steps.Count < 0)
                     throw new ApplicationException("Недопустимое значение количество шагов");
 
+
                 //первый шаг создания записи
-                if (currentStep != null)
+                if (steps.Count == 1)
                 {
                     ManicureType manicureType = ManicureType.None;
                     PedicureType pedicureType = PedicureType.None;
-
-                    if (currentStep.Procedure is Pedicure)
-                        pedicureType = Helper.GetEnumValueOrDefault(input, pedicureType);
-
-                    if (currentStep.Procedure is Manicure)
-                        manicureType = Helper.GetEnumValueOrDefault(input, manicureType);
+                     
+                    switch (currentStep.Procedure)
+                    {
+                        case Pedicure:
+                            pedicureType = Helper.GetEnumValueOrDefault(input, pedicureType);
+                            break;
+                        case Manicure:
+                            manicureType = Helper.GetEnumValueOrDefault(input, manicureType);
+                            break;
+                        default:
+                            break;
+                    }
 
                     if (manicureType != ManicureType.None || pedicureType != PedicureType.None)
                     {
