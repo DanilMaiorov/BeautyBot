@@ -23,9 +23,7 @@ namespace BeautyBot.src
                 throw new ArgumentException("Procedure name cannot be empty", nameof(procedureName));
 
             if (_procedureCreators.TryGetValue(procedureName, out var creator))
-            {
                 return creator(currentStepProcedure);
-            }
 
             throw new ArgumentException($"Unknown procedure: {procedureName}", nameof(procedureName));
         }

@@ -9,30 +9,41 @@ namespace BeautyBot.src.BeautyBot.Application.Services
     public class AppointmentService : IAppointmentService
     {
         private readonly IAppointmentRepository _appointmentRepository;
+
+        private readonly ISlotRepository _slotRepository;
+
         private readonly IProcedureDefinitionRepository _procedureDefinitionRepository; // Для получения деталей процедуры
 
-        public AppointmentService(IAppointmentRepository appointmentRepository, IProcedureDefinitionRepository procedureDefinitionRepository)
+        public AppointmentService(IAppointmentRepository appointmentRepository, IProcedureDefinitionRepository procedureDefinitionRepository, ISlotRepository slotRepository)
         {
             _appointmentRepository = appointmentRepository;
             _procedureDefinitionRepository = procedureDefinitionRepository;
+            _slotRepository = slotRepository;   
         }
 
         // реализация метода интерфейса Add
-        public async Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, string appointmentTime, CancellationToken ct)
+        public async Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateTime date, CancellationToken ct)
         {
-            //var tasks = await GetAllByUserId(user.UserId, ct);
-            //if (tasks.Count >= maxTaskAmount)
-            //    throw new TaskCountLimitException(maxTaskAmount);
-            //string newTask = Validate.ValidateString(name, maxTaskLength);
-            //написать метод проверки дубликатов добавленных записей
-            //Helper.CheckDuplicate(newTask, tasks);
-
-            var newAppointment = new Appointment(user.UserId, procedure, appointmentTime);
+            var newAppointment = new Appointment(user.UserId, procedure, date);
 
             await _appointmentRepository.Add(newAppointment, ct);
 
+            //await _slotRepository.Add(newAppointment, ct);
+
             return newAppointment;
         }
+
+
+
+
+
+
+
+
+
+
+
+
 
         public async Task<IReadOnlyList<Appointment>> GetUserAppointmentsByUserId(Guid userId, CancellationToken ct)
         {

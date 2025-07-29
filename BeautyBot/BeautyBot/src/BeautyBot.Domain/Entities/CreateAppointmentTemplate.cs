@@ -6,10 +6,10 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
     public class CreateAppointmentTemplate
     {
         public IProcedure Procedure { get; set; } // храню интерфейс или конкретный класс
-        public string AppointmentDate { get; set; }
-        public string AppointmentTime { get; set; }
+        public DateOnly AppointmentDate { get; set; }
+        public TimeOnly AppointmentTime { get; set; }
 
-        public CreateAppointmentTemplate(IProcedure procedure, string appointmentDate = null, string appointmentTime = null)
+        public CreateAppointmentTemplate(IProcedure procedure, DateOnly appointmentDate = default, TimeOnly appointmentTime = default)
         {
             Procedure = procedure;
             AppointmentDate = appointmentDate;

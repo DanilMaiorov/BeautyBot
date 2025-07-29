@@ -5,6 +5,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
     public class GelPolishManicure : Manicure
     {
         public ManicureType Type { get; } = ManicureType.GelPolish;
-        public GelPolishManicure() : base("Маникюр гель-лак", 1500, Procedure.Manicure) { }
+        public GelPolishManicure() : base("Маникюр гель-лак", 1500, Procedure.Manicure, 120) { }
     }
 }

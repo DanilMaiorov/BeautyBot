@@ -89,23 +89,26 @@ namespace BeautyBot
         public static readonly ReplyKeyboardMarkup chooseTime = new ReplyKeyboardMarkup(
             new[]
             {
-                new KeyboardButton("6 утра"),
-                new KeyboardButton("14:88 дня"),
+                GetSlots(),
+
                 new KeyboardButton(Constants.Back)
             })
         {
-            ResizeKeyboard = true,    // Автоматическое изменение размера
+            ResizeKeyboard = false,    // Автоматическое изменение размера
             OneTimeKeyboard = false   // Остается открытой после использования
         };
 
-        //привести к нижнему регистру черкз String.To
+        private static KeyboardButton GetSlots()
+        {
+            return new KeyboardButton("6 утра");
+        }
 
 
 
         public static readonly ReplyKeyboardMarkup approveDate = new ReplyKeyboardMarkup(
             new[]
             {
-                new KeyboardButton("Изменить дату"),
+                new KeyboardButton(Constants.ChangeDate),
                 new KeyboardButton(Constants.Accept)
             })
         {
@@ -118,7 +121,7 @@ namespace BeautyBot
         public static readonly ReplyKeyboardMarkup approveTime = new ReplyKeyboardMarkup(
             new[]
             {
-                new KeyboardButton("Изменить время"),
+                new KeyboardButton(Constants.ChangeTime),
                 new KeyboardButton(Constants.Accept)
             })
         {
@@ -128,24 +131,20 @@ namespace BeautyBot
 
 
 
-        //    public static InlineKeyboardMarkup dates = new InlineKeyboardMarkup()
-
-
-
-
-        //        //    var firstDayOfMonth = new DateTime(date.Year, date.Month, 1);
-        //        //    var daysInMonth = DateTime.DaysInMonth(date.Year, date.Month);
-        //        //    var dayOfWeek = (int)firstDayOfMonth.DayOfWeek;
-
-
-
-        //}
-
-
         public static InlineKeyboardMarkup dates = new InlineKeyboardMarkup(
 
             //CalendarGenerator.GenerateCalendar(DateTime.Now)
         );
+
+
+
+
+        private static ReplyKeyboardMarkup GetTimeSlots()
+        {
+
+
+            return new ReplyKeyboardMarkup();
+        }
     }
 }
 

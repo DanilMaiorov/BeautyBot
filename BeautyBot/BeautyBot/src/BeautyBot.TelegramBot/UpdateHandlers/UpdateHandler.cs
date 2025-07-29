@@ -7,6 +7,8 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using System.Globalization;
 using System.Linq;
+using BeautyBot.src.BeautyBot.Application.Services;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -15,6 +17,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
     {
         private readonly IUserService _userService;
         private readonly IAppointmentService _appointmentService;
+        private readonly ISlotService _slotService;
+
         private readonly IProcedureCatalogService _procedureCatalogService;
         private readonly IPriceCalculationService _priceCalculationService;
 
@@ -33,6 +37,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             IProcedureCatalogService procedureCatalogService,
             IPriceCalculationService priceCalculationService,
 
+            ISlotService slotService,
             ICreateAppointmentService createAppointmentService,
             CancellationToken ct)
         {
@@ -41,6 +46,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             _procedureCatalogService = procedureCatalogService ?? throw new ArgumentNullException(nameof(procedureCatalogService));
             _priceCalculationService = priceCalculationService ?? throw new ArgumentNullException(nameof(priceCalculationService));
 
+            _slotService = slotService;
             _createAppointmentService = createAppointmentService;
             _ct = ct;
         }
@@ -89,18 +95,15 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     }
                 }
 
-
-
                 //присваиваю начальное значение введёного сообщения
                 eventMessage = input;
 
                 //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateStarted?.Invoke(eventMessage);
 
-                (string inputCommand, string inputText, string chooseMonth, string appointmentDate, string appointmentTime, Guid taskGuid) = Helper.InputCheck(input, currentUserTaskList);
+                (string inputCommand, string inputText, string chooseMonth, DateOnly appointmentDate, TimeOnly appointmentTime, Guid taskGuid) = Helper.InputCheck(input, currentUserTaskList);
 
                 input = inputCommand.Replace("/", string.Empty);
-
 
                 //проверка списка с шагами записи
                 var steps = await _createAppointmentService.GetSteps();
@@ -144,20 +147,10 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     }
                 }
 
-
-
-
                 Console.WriteLine(input);
 
                 //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateCompleted?.Invoke(eventMessage);
-
-
-
-
-
-
-
 
                 //объявление типа данных команды
                 Command command;
@@ -228,33 +221,26 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         Console.WriteLine("FindAppointmentFindAppointment");
                         break;
 
-
-
                     //команды создания записи
                     case Command.Create:
                         await botClient.SendMessage(currentChat, "Куда записываемся?", replyMarkup: Keyboards.secondStep, cancellationToken: _ct);
                         break;
 
 
-
-
                     case Command.Manicure:
                         await botClient.SendMessage(currentChat, "Выберите маникюр", replyMarkup: Keyboards.thirdManicureStep, cancellationToken: _ct);
-                        await _createAppointmentService.AddStep(new Manicure("", default, default), appointmentDate);
+                        await _createAppointmentService.AddStep(new Manicure("", default, default, default), appointmentDate);
                         break;
 
 
                     case Command.Pedicure:
                         await botClient.SendMessage(currentChat, "Выберите педикюр", replyMarkup: Keyboards.thirdPedicureStep, cancellationToken: _ct);
-                        await _createAppointmentService.AddStep(new Pedicure("", default, default), appointmentDate);
+                        await _createAppointmentService.AddStep(new Pedicure("", default, default, default), appointmentDate);
                         break;
-
-
 
 
                     case Command.Time:
                         await _createAppointmentService.AddStep(currentStep.Procedure, currentStep.AppointmentDate, appointmentTime);
-
                         await botClient.SendMessage(currentChat, "Подтвердите время", replyMarkup: Keyboards.approveTime, cancellationToken: _ct);
 
                         break;
@@ -264,14 +250,15 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         await HandleBackCommand(botClient, currentChat.Id, steps, currentStep);
                         break;
 
-
                     case Command.Approve:
 
                         if (steps.Count == 4)
                         {
-                            var date = currentStep.AppointmentDate + ", " + currentStep.AppointmentTime;
-
-                            await _appointmentService.AddAppointment(currentUser, currentStep.Procedure, date, _ct);
+                            await _appointmentService.AddAppointment(
+                                currentUser, 
+                                currentStep.Procedure,
+                                currentStep.AppointmentDate.ToDateTime(currentStep.AppointmentTime), 
+                                _ct);
 
                             await botClient.SendMessage(currentChat, "Вы успешно записаны", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
 
@@ -279,18 +266,15 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         }
                         else if (steps.Count == 3)
                         {
-                            await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: Keyboards.chooseTime, cancellationToken: _ct);
-                        }
-                        else if (steps.Count == 2)
-                        {
-                            await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: Keyboards.chooseDate, cancellationToken: _ct);
+                            var slots = await _slotService.GetSlots(currentStep.AppointmentDate, ct);
+
+                            await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: SlotsKeyboard(slots), cancellationToken: _ct);
                         }
 
                         break;
 
 
                     case Command.Exit:
-                        //await ShowHelp(currentUser);
                         Console.WriteLine("ExitExit");
                         break;
 
@@ -340,7 +324,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateStarted?.Invoke(eventMessage);
 
-                (string inputCommand, string inputText, string chooseMonth, string appointmentDate, string appointmentTime, Guid taskGuid) = Helper.InputCheck(input, currentUserTaskList);
+                (string inputCommand, string inputText, string chooseMonth, DateOnly appointmentDate, TimeOnly appointmentTime, Guid taskGuid) = Helper.InputCheck(input, currentUserTaskList);
 
                 input = inputCommand.Replace("/", string.Empty);
 
@@ -437,14 +421,14 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                         await _createAppointmentService.AddStep(currentStep.Procedure, appointmentDate);
 
-                        await botClient.SendMessage(currentChat, "Подтвердите дату", replyMarkup: Keyboards.approveDate, cancellationToken: _ct);
+                        await botClient.SendMessage(currentChat, $"Выбранная дата - {appointmentDate}\n\nВерно?", replyMarkup: Keyboards.approveDate, cancellationToken: _ct);
 
                         break;
 
                     case Command.Time:
                         await _createAppointmentService.AddStep(currentStep.Procedure, currentStep.AppointmentDate, appointmentTime);
 
-                        await botClient.SendMessage(currentChat, "Подтвердите время", replyMarkup: Keyboards.approveTime, cancellationToken: _ct);
+                        await botClient.SendMessage(currentChat, $"Выбранное время - {appointmentTime}\n\nВерно?", replyMarkup: Keyboards.approveTime, cancellationToken: _ct);
 
                         break;
 
@@ -478,12 +462,28 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
 
 
+        private ReplyKeyboardMarkup SlotsKeyboard(Dictionary<TimeOnly, bool> slots)
+        {
+            if (slots.Count < 0)
+            {
+                Console.WriteLine("На выбранную дату записей нет");
+            }
+            var buttons = slots
+                .Select(button => new KeyboardButton(button.Key.ToString()))
+                .Select(btn => new[] { btn })
+                .ToArray();
 
 
+            //var keyboard = buttons
+            //    .Select(btn => new[] { btn }) // Каждая кнопка в отдельном массиве = новая строка
+            //    .ToArray();
 
-
-
-
+            return new ReplyKeyboardMarkup(buttons)
+            {
+                ResizeKeyboard = true,
+                OneTimeKeyboard = true
+            };
+        }
 
         #region МЕТОДЫ КОМАНД
         private async Task ShowAppointments(
@@ -556,9 +556,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 steps.RemoveAt(step - 1); // Удаляем последний шаг
 
             Console.WriteLine(currentStep);
-
-            Console.WriteLine(currentStep.Procedure is Pedicure);
-
 
             var currentStepNumber = currentStep.Procedure switch
             {

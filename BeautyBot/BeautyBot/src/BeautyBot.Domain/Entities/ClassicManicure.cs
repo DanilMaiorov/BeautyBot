@@ -10,6 +10,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
     public class ClassicManicure : Manicure
     {
         public ManicureType Type { get; } = ManicureType.French;
-        public ClassicManicure() : base("Класссический маникюр", 1000, Procedure.Manicure) { }
+        public ClassicManicure() : base("Класссический маникюр", 1000, Procedure.Manicure, 60) { }
     }
 }

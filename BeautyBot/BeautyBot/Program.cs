@@ -16,11 +16,11 @@ namespace BeautyBot
         static async Task Main(string[] args)
         {
             //string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
-            string token = "7512417913:AAHnoeWdDKNOyTuF0DMHpPVdO95imk0xMgw";
+            string token = "8389262050:AAGxiMOnoOzcgrytZfmSnewL-PXFkv2fp38";
 
             if (string.IsNullOrEmpty(token))
             {
-                Console.WriteLine("Bot token not found. Please set the TELEGRAM_BOT_TOKEN environment variable.");
+                Console.WriteLine("Bot token not found. Please set the BEAUTY_BOT_TOKEN environment variable.");
                 return;
             }
 
@@ -39,9 +39,16 @@ namespace BeautyBot
             //IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository(); ТУТ НУЖНО БУДЕТ ЗАМЕНИТЬ НА ХРАНЕНИЕ В ЛОКАЛЬНЫХ ФАЙЛАХ
 
             IProcedureDefinitionRepository procedureDefinitionRepository = new InMemoryProcedureDefinitionRepository();
+            ISlotRepository slotRepository = new InMemorySlotRepository();
 
             IUserService _userService = new UserService(userRepository);
-            IAppointmentService _appointmentService = new AppointmentService(appointmentRepository, procedureDefinitionRepository);
+
+            IAppointmentService _appointmentService = new AppointmentService(appointmentRepository, procedureDefinitionRepository, slotRepository);
+
+            ISlotService _slotService = new SlotService(slotRepository);
+
+
+
 
             IProcedureCatalogService _procedureCatalogService = new ProcedureCatalogService(procedureDefinitionRepository);
             IPriceCalculationService _priceCalculationService = new PriceCalculationService();
@@ -65,6 +72,7 @@ namespace BeautyBot
                 _procedureCatalogService,
                 _priceCalculationService,
 
+                _slotService,
                 _createAppointmentService,
                 cts.Token);
 

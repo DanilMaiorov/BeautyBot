@@ -74,55 +74,27 @@ namespace BeautyBot.src
         /// <param name="input">Ввод пользователя</param>
         /// <param name="currentUserAppointmentsList">Список записей юзера</param>
         /// <returns>Кортеж с данными по записи</returns>
-        public static (string, string, string, string, string, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        public static (string, string, string, DateOnly, TimeOnly, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
         {
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
             string month = "";
-            string date = "";
-            string time = "";
+            DateOnly date = default;
+
 
             var inputLower = input.ToLower();
 
-            //if (input.StartsWith("/add") || input.StartsWith("/del") || input.StartsWith("/updateappointment") || input.StartsWith("/find"))
-            //{
-            //    if (input.StartsWith("/add "))
-            //    {
-            //        cutInput = input.Substring(5);
-            //        input = "/add";
-            //    }
-            //    else if (input.StartsWith("/del ") || input.StartsWith("/updateappointment "))
-            //    {
-            //        //верну данные кортежем
-            //        (string command, Guid taskGuid) inputData = Validate(input, taskGuid, currentUserAppointmentsList);
-
-            //        input = inputData.command;
-            //        taskGuid = inputData.taskGuid;
-            //    }
-            //    else
-            //    {
-            //        input = "unregistered user command";
-            //    }
-            //}
-
-
-
+            
 
             if (inputLower.StartsWith("day_selected_"))
             {
-                date = GetFormattedMonthDateTime(inputLower);
+                date = ParseDateFromString(inputLower);
                 inputLower = "/date";
             } 
-            else if (inputLower.StartsWith("time_selected_"))
-            {
-                time = GetFormattedMonthDateTime(inputLower);
-                inputLower = "/time";
-            }
-
             else if (inputLower.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || inputLower.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase))
             {
-                month = GetFormattedMonthDateTime(inputLower);
+                month = GetFormattedMonth(inputLower);
                 inputLower = "/changemonth";
 
             }
@@ -132,6 +104,14 @@ namespace BeautyBot.src
             //    // Просто закрываем всплывающее уведомление, так как эти кнопки не требуют других действий
             //    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
             //}
+
+
+
+            if (TimeOnly.TryParse(inputLower, out var time))
+                inputLower = "/time";
+            
+
+
 
             switch (inputLower)
             {
@@ -145,7 +125,6 @@ namespace BeautyBot.src
 
 
 
-
                 case "маникюр":
                     inputLower = "/manicure";
                     break;
@@ -153,7 +132,6 @@ namespace BeautyBot.src
                 case "педикюр":
                     inputLower = "/pedicure";
                     break;
-
 
 
 
@@ -173,14 +151,14 @@ namespace BeautyBot.src
 
 
                 case "1 января":
-                    date = inputLower;
+                    date = new DateOnly();
                     inputLower = "/date";
                     break;
 
 
 
                 case "6 утра":
-                    time = inputLower;
+                    //time = inputLower;
                     inputLower = "/time";
                     break;
 
@@ -201,11 +179,41 @@ namespace BeautyBot.src
         }
 
 
-        public static string GetFormattedMonthDateTime(string callbackData)
+
+        private static DateOnly ParseDateFromString(string input)
         {
-            if (!callbackData.StartsWith("day_selected_", StringComparison.OrdinalIgnoreCase) &&
-                !callbackData.StartsWith("time_selected_", StringComparison.OrdinalIgnoreCase) &&
-                !callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) &&
+            int lastUnderscoreIndex = input.LastIndexOf('_');
+
+            if (lastUnderscoreIndex == -1 || lastUnderscoreIndex == input.Length - 1)
+                throw new ArgumentException("Invalid input format");
+            
+            string dateString = input.Substring(lastUnderscoreIndex + 1);
+
+            if (DateOnly.TryParseExact(dateString, "yyyy-MM-dd",
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly result))
+            {
+                return result;
+            }
+
+            throw new FormatException("Could not parse date from string");
+        }
+
+        private static DateOnly ParseTimeFromString(string input)
+        {
+
+            if (DateOnly.TryParseExact(input, "yyyy-MM-dd",
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly result))
+            {
+                return result;
+            }
+
+            throw new FormatException("Could not parse date from string");
+        }
+
+
+        public static string GetFormattedMonth(string callbackData)
+        {
+            if (!callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) &&
                 !callbackData.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase)
                 )
 
@@ -218,17 +226,10 @@ namespace BeautyBot.src
             var formattedDate = "";
 
 
-            // Пытаемся распарсить строку даты
             if (DateTime.TryParseExact(dateFromCallback[dateFromCallback.Length - 1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
             {
                 switch (dateFromCallback[0])
                 {
-                    case "day":
-                        formattedDate = date.ToString("dd MMMM", CultureInfo.CurrentCulture);
-                        break;
-                    case "time":
-                        formattedDate = date.ToString("dd MMMM", CultureInfo.CurrentCulture);
-                        break;
                     case "next":
                     case "prev":
                         formattedDate = date.ToString("MM", CultureInfo.CurrentCulture);

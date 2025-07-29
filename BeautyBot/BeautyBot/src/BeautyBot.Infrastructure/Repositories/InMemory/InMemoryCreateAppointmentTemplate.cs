@@ -21,14 +21,14 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             await Task.Delay(1);
         }
 
-        public async Task AddStep(IProcedure procedure, string date)
+        public async Task AddStep(IProcedure procedure, DateOnly date)
         {
             _steps.Add(new CreateAppointmentTemplate(procedure, date));
 
             await Task.Delay(1);
         }
 
-        public async Task AddStep(IProcedure procedure, string date, string time)
+        public async Task AddStep(IProcedure procedure, DateOnly date, TimeOnly time)
         {
             _steps.Add(new CreateAppointmentTemplate(procedure, date, time));
 

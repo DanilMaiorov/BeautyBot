@@ -18,8 +18,9 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
 
         public const string ToDoAppointment = "Записаться";
 
+        public const string ChangeDate = "Выбрать другую дату";
+        public const string ChangeTime = "Выбрать другое время";
 
-        //public const string Back = "Назад";
         //public const string Back = "Назад";
         //public const string Back = "Назад";
         //public const string Back = "Назад";
