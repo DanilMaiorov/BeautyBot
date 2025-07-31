@@ -82,10 +82,7 @@ namespace BeautyBot.src
             string month = "";
             DateOnly date = default;
 
-
             var inputLower = input.ToLower();
-
-            
 
             if (inputLower.StartsWith("day_selected_"))
             {
@@ -150,16 +147,14 @@ namespace BeautyBot.src
 
 
 
-                case "1 января":
-                    date = new DateOnly();
-                    inputLower = "/date";
+                case "выбрать другую дату":
+                    inputLower = "/changedate";
                     break;
 
 
 
-                case "6 утра":
-                    //time = inputLower;
-                    inputLower = "/time";
+                case "выбрать другое время":
+                    inputLower = "/changetime";
                     break;
 
 
@@ -177,7 +172,6 @@ namespace BeautyBot.src
             }
             return (inputLower, cutInput, month, date, time, taskGuid);
         }
-
 
 
         private static DateOnly ParseDateFromString(string input)

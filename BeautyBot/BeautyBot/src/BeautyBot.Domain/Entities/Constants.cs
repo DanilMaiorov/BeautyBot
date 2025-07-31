@@ -15,6 +15,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         public const string Start = "Старт";
         public const string Accept = "Верно";
         public const string Back = "Назад";
+        public const string Cancel = "Отмена";
 
         public const string ToDoAppointment = "Записаться";
 

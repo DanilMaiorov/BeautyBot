@@ -1,5 +1,7 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
+using System.Globalization;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 {
@@ -7,48 +9,81 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
     {
         private readonly Dictionary<DateOnly, Dictionary<TimeOnly, bool>> _slots = new();
 
-        public Task<Dictionary<TimeOnly, bool>> GetSlots(DateOnly date, CancellationToken ct)
+        public async Task<Dictionary<DateOnly, Dictionary<TimeOnly, bool>>> GetAllDaySlots()
         {
+            return await Task.FromResult(_slots);
+        }
 
-            if (_slots.TryGetValue(date, out var slots))
-            {
-                slots.Where(slot => !slot.Value);
-            }
-            else
-            {
-                slots = SlotsGenerator();
-
+        public Task<Dictionary<TimeOnly, bool>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct)
+        {
+            if (!_slots.TryGetValue(date, out var slots))
+            {   
+                slots = GenerateTimeSlots();
                 _slots[date] = slots;
             }
 
+            var availableSlots = slots
+                .Where(slot => !slot.Value)
+                .ToDictionary(pair => pair.Key, pair => pair.Value);
 
-
-            return Task.FromResult(slots);
+            return Task.FromResult(availableSlots);
         }
+
+
         public Task Add(Appointment appointment, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
 
-        //private bool IsBooked()
-        //{
-        //    return _days.Any();
-        //}
-
-        private Dictionary<TimeOnly, bool> SlotsGenerator()
+        public async Task UpdateSlot(DateOnly date, TimeOnly time)
         {
-            Dictionary<TimeOnly, bool> s = new();
+            var currentDaySlots = _slots[date];
+
+            await Task.FromResult(currentDaySlots[time] = true);
+        }
+
+
+
+        private Dictionary<TimeOnly, bool> GenerateTimeSlots()
+        {
+            Dictionary<TimeOnly, bool> slots = new();
 
             var startTime = new TimeOnly(9, 0);
-            var endTime = new TimeOnly(18, 0);
-            var interval = TimeSpan.FromMinutes(90);
+            var endTime = new TimeOnly(10, 0);
+            var interval = TimeSpan.FromMinutes(60);
 
             for (var time = startTime; time <= endTime; time = time.Add(interval))
-            {
-                s[time] = false;
-            }
+                slots[time] = false;
+            
+            return slots;
+        }
 
-            return s;
+
+
+        public async Task<List<DateOnly>> GetUnavailableDaySlots(CancellationToken ct)
+        {
+            if (_slots.Count == 0)
+                return await Task.FromResult(new List<DateOnly>());
+
+            var days = _slots
+                .Where(day => day.Value.All(item => item.Value))
+                .Select(day => day.Key)
+                .ToList();
+
+            return await Task.FromResult(days);
+        }
+
+        public async Task<List<DateOnly>> GetAvailableDaySlots(CancellationToken ct)
+        {
+            if (_slots.Count == 0)
+                return await Task.FromResult(new List<DateOnly>());
+
+            var days = _slots
+                .Where(day => day.Value.Any(item => !item.Value))
+                .Select(day => day.Key)
+                .ToList();
+
+            return await Task.FromResult(days);
         }
     }
 }

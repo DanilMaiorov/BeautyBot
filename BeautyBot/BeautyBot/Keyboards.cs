@@ -139,13 +139,17 @@ namespace BeautyBot
 
 
 
-        private static ReplyKeyboardMarkup GetTimeSlots()
+        public static readonly ReplyKeyboardMarkup cancelOrBack  = new ReplyKeyboardMarkup(
+            new[]
+            {
+                new KeyboardButton(Constants.Cancel),
+                new KeyboardButton(Constants.Back)
+            })
         {
-
-
-            return new ReplyKeyboardMarkup();
+            ResizeKeyboard = true,    // Автоматическое изменение размера
+            OneTimeKeyboard = false   // Остается открытой после использования
+        };
         }
-    }
 }
 
 

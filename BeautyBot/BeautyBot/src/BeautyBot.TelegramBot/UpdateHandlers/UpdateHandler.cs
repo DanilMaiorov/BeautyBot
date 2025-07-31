@@ -114,7 +114,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 if (steps.Count < 0)
                     throw new ApplicationException("Недопустимое значение количество шагов");
 
-
                 //первый шаг создания записи
                 if (steps.Count == 1)
                 {
@@ -139,9 +138,17 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                         await _createAppointmentService.AddStep(procedure);
 
-                        var calendarMarkup = CalendarGenerator.GenerateCalendar(DateTime.Today);
+                        var calendarMarkup = DaySlotsKeyboard(
+                            DateTime.Today,
+                            DateTime.Today,
+                            DateTime.Today.AddDays(60),
+                            await _slotService.GetUnavailableDaySlots(ct)
+                            );
 
-                        await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
+
+                        await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: _ct);
+
+                        await botClient.SendMessage(currentChat, "✖ - означает, что на выбранную дату нет свободных слотов", replyMarkup: calendarMarkup, cancellationToken: _ct);
 
                         return;
                     }
@@ -238,16 +245,22 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         await _createAppointmentService.AddStep(new Pedicure("", default, default, default), appointmentDate);
                         break;
 
+                    case Command.ChangeDate:
+                        await HandleBackCommand(update, botClient, currentChat.Id, steps, currentStep, ct, "Выберите другую дату");
+                        break;
 
-                    case Command.Time:
-                        await _createAppointmentService.AddStep(currentStep.Procedure, currentStep.AppointmentDate, appointmentTime);
-                        await botClient.SendMessage(currentChat, "Подтвердите время", replyMarkup: Keyboards.approveTime, cancellationToken: _ct);
+                    case Command.ChangeTime:
+                        await HandleBackCommand(update, botClient, currentChat.Id, steps, currentStep, ct, "Выберите другое время");
 
                         break;
 
+                    case Command.Time:
+                        await _createAppointmentService.AddStep(currentStep.Procedure, currentStep.AppointmentDate, appointmentTime);
+                        await botClient.SendMessage(currentChat, $"Выбранное время - {appointmentTime}\n\nВерно?", replyMarkup: Keyboards.approveTime, cancellationToken: _ct);
+                        break;
 
                     case Command.Back:
-                        await HandleBackCommand(botClient, currentChat.Id, steps, currentStep);
+                        await HandleBackCommand(update, botClient, currentChat.Id, steps, currentStep, ct, "Выберите новую дату");
                         break;
 
                     case Command.Approve:
@@ -260,17 +273,18 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                                 currentStep.AppointmentDate.ToDateTime(currentStep.AppointmentTime), 
                                 _ct);
 
+                            await _slotService.UpdateSlot(currentStep.AppointmentDate, currentStep.AppointmentTime, ct);
+
                             await botClient.SendMessage(currentChat, "Вы успешно записаны", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
 
                             await _createAppointmentService.RefreshSteps();
                         }
                         else if (steps.Count == 3)
                         {
-                            var slots = await _slotService.GetSlots(currentStep.AppointmentDate, ct);
+                            var slots = await _slotService.GetCurrentDayAvailableTimeSlots(currentStep.AppointmentDate, ct);
 
-                            await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: SlotsKeyboard(slots), cancellationToken: _ct);
+                            await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: _ct);
                         }
-
                         break;
 
 
@@ -279,9 +293,14 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         break;
 
                     default:
-                        if (currentUser == null)
-                            await botClient.SendMessage(currentChat, "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", replyMarkup: Keyboards.start, cancellationToken: _ct);
-                        //await Helper.CommandsRender(currentChat, botClient, _ct);
+                        await botClient.SendMessage(
+                            currentChat,
+                            "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n",
+                            replyMarkup: currentUser != null ? Keyboards.start : Keyboards.firstStep,
+                            cancellationToken: _ct);
+
+                        await _createAppointmentService.RefreshSteps();
+
                         break;
                 }
             }
@@ -346,8 +365,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 else
                     manicureType = default;
 
-
-
                 Console.WriteLine(input);
 
                 //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
@@ -375,7 +392,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 var steps = await _createAppointmentService.GetSteps();
 
                 CreateAppointmentTemplate currentStep = await _createAppointmentService.GetStep();
-
 
                 if (steps.Count < 0)
                     throw new ApplicationException("Недопустимое значение количество шагов");
@@ -418,16 +434,13 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         break;
 
                     case Command.Date:
-
                         await _createAppointmentService.AddStep(currentStep.Procedure, appointmentDate);
-
                         await botClient.SendMessage(currentChat, $"Выбранная дата - {appointmentDate}\n\nВерно?", replyMarkup: Keyboards.approveDate, cancellationToken: _ct);
 
                         break;
 
                     case Command.Time:
                         await _createAppointmentService.AddStep(currentStep.Procedure, currentStep.AppointmentDate, appointmentTime);
-
                         await botClient.SendMessage(currentChat, $"Выбранное время - {appointmentTime}\n\nВерно?", replyMarkup: Keyboards.approveTime, cancellationToken: _ct);
 
                         break;
@@ -435,8 +448,12 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     case Command.Changemonth:
                         if (DateTime.TryParseExact(chooseMonth, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth))
                         {
-                            // Генерируем новую клавиатуру календаря для запрошенного месяца
-                            var newCalendarMarkup = CalendarGenerator.GenerateCalendar(newDisplayMonth);
+                            var newCalendarMarkup = DaySlotsKeyboard(
+                                newDisplayMonth,
+                                DateTime.Today,
+                                DateTime.Today.AddDays(60),
+                                await _slotService.GetUnavailableDaySlots(ct)
+                                );
 
                             await botClient.EditMessageReplyMarkup(currentChat, update.CallbackQuery.Message.Id, replyMarkup: newCalendarMarkup, cancellationToken: _ct);
                         }
@@ -449,9 +466,14 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         break;
 
                     default:
-                        if (currentUser == null)
-                            await botClient.SendMessage(currentChat, "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", replyMarkup: Keyboards.start, cancellationToken: _ct);
-                        //await Helper.CommandsRender(currentChat, botClient, _ct);
+                        await botClient.SendMessage(
+                            currentChat, 
+                            "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n", 
+                            replyMarkup: currentUser != null ? Keyboards.start : Keyboards.firstStep, 
+                            cancellationToken: _ct);
+
+                        await _createAppointmentService.RefreshSteps();
+
                         break;
                 }
             }
@@ -462,7 +484,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
 
 
-        private ReplyKeyboardMarkup SlotsKeyboard(Dictionary<TimeOnly, bool> slots)
+        private ReplyKeyboardMarkup TimeSlotsKeyboard(Dictionary<TimeOnly, bool> slots)
         {
             if (slots.Count < 0)
             {
@@ -473,16 +495,131 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 .Select(btn => new[] { btn })
                 .ToArray();
 
-
-            //var keyboard = buttons
-            //    .Select(btn => new[] { btn }) // Каждая кнопка в отдельном массиве = новая строка
-            //    .ToArray();
-
             return new ReplyKeyboardMarkup(buttons)
             {
                 ResizeKeyboard = true,
                 OneTimeKeyboard = true
             };
+        }
+
+        private static InlineKeyboardMarkup DaySlotsKeyboard(
+            DateTime displayMonth,
+            DateTime minDate,
+            DateTime maxDate,
+            List<DateOnly> unavailableDays)
+        {
+            string PrevMonthCallback = "prev_month_";
+            string NextMonthCallback = "next_month_";
+            string DaySelectedCallback = "day_selected_";
+
+
+            var keyboardButtons = new List<List<InlineKeyboardButton>>();
+
+            // Add day names row
+            var dayNamesRow = new List<InlineKeyboardButton>();
+            for (int i = 0; i < 7; i++)
+            {
+                dayNamesRow.Add(InlineKeyboardButton.WithCallbackData(
+                    CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames[(i + (int)DayOfWeek.Monday) % 7], // Start from Monday
+                    "day_name_no_action" // No action for day names
+                ));
+            }
+            keyboardButtons.Add(dayNamesRow);
+
+            // Add month days
+            var firstDayOfMonth = new DateTime(displayMonth.Year, displayMonth.Month, 1);
+            var daysInMonth = DateTime.DaysInMonth(displayMonth.Year, displayMonth.Month);
+
+            // Calculate offset for the first day of the month (0 for Monday, 6 for Sunday)
+            int offset = ((int)firstDayOfMonth.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+
+            var currentRow = new List<InlineKeyboardButton>();
+
+            // Add empty buttons for the days before the first day of the month
+            for (int i = 0; i < offset; i++)
+                currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
+
+            for (int day = 1; day <= daysInMonth; day++)
+            {
+                var currentDay = new DateTime(displayMonth.Year, displayMonth.Month, day);
+                var currentDateOnly = DateOnly.FromDateTime(currentDay);
+                // Check if the day is within the allowed range
+                bool isDayValid = currentDay >= minDate && currentDay <= maxDate;
+                bool isDayAvailable = isDayValid && !unavailableDays.Contains(currentDateOnly);
+
+                if (isDayValid)
+                {
+                    currentRow.Add(InlineKeyboardButton.WithCallbackData(
+                        isDayAvailable ? day.ToString() : "✖",
+                        isDayAvailable ? $"{DaySelectedCallback}{currentDay:yyyy-MM-dd}" : "day_unavailable"
+                    ));
+                }
+                else
+                {
+                    currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
+                }
+
+                if (currentRow.Count == 7)
+                {
+                    keyboardButtons.Add(currentRow);
+                    currentRow = new List<InlineKeyboardButton>();
+                }
+            }
+            // Add remaining empty buttons for the last row
+            if (currentRow.Any())
+            {
+                while (currentRow.Count < 7)
+                    currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
+
+                keyboardButtons.Add(currentRow);
+            }
+
+            // Add navigation row
+            var navigationRow = new List<InlineKeyboardButton>();
+
+            // Previous month button (only if not the starting month)
+            if (displayMonth.Year > minDate.Year || (displayMonth.Year == minDate.Year && displayMonth.Month > minDate.Month))
+            {
+                navigationRow.Add(InlineKeyboardButton.WithCallbackData(
+                    "<",
+                    $"{PrevMonthCallback}{displayMonth.AddMonths(-1):yyyy-MM-dd}"
+                ));
+            }
+            else
+            {
+                navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
+            }
+
+            navigationRow.Add(InlineKeyboardButton.WithCallbackData(
+                displayMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture),
+                "month_display_no_action"
+            ));
+
+            // Next month button (only if there are available days in the next month within the 60-day range)
+            if (displayMonth.AddMonths(1) <= maxDate.AddDays(1).Date) // Check if next month potentially contains valid dates
+            {
+                // Check if any day in the next month falls within the maxDate range
+                var nextMonthFirstDay = new DateTime(displayMonth.AddMonths(1).Year, displayMonth.AddMonths(1).Month, 1);
+                if (nextMonthFirstDay <= maxDate)
+                {
+                    navigationRow.Add(InlineKeyboardButton.WithCallbackData(
+                        ">",
+                        $"{NextMonthCallback}{displayMonth.AddMonths(1):yyyy-MM-dd}"
+                    ));
+                }
+                else
+                {
+                    navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
+                }
+            }
+            else
+            {
+                navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
+            }
+
+            keyboardButtons.Add(navigationRow);
+
+            return new InlineKeyboardMarkup(keyboardButtons);
         }
 
         #region МЕТОДЫ КОМАНД
@@ -548,38 +685,65 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
 
 
-        private async Task HandleBackCommand(ITelegramBotClient botClient, long chatId, List<CreateAppointmentTemplate> steps, CreateAppointmentTemplate currentStep)
+        private async Task HandleBackCommand(
+            Update update,
+            ITelegramBotClient botClient, 
+            long chatId, 
+            List<CreateAppointmentTemplate> steps, 
+            CreateAppointmentTemplate currentStep, 
+            CancellationToken ct,
+            string message = "Выберите дату")
         {
             var step = steps.Count;
 
             if (step > 0)
                 steps.RemoveAt(step - 1); // Удаляем последний шаг
 
-            Console.WriteLine(currentStep);
-
-            var currentStepNumber = currentStep.Procedure switch
+            if (currentStep != null)
             {
-                Pedicure => Constants.StepsConfigPedicure.ElementAt(step),
-                Manicure => Constants.StepsConfigManicure.ElementAt(step),
-                _ => throw new NotSupportedException($"Unsupported procedure type: {currentStep.Procedure.GetType()}")
-            };
+                var currentStepNumber = currentStep.Procedure switch
+                {
+                    Pedicure => Constants.StepsConfigPedicure.ElementAt(step),
+                    Manicure => Constants.StepsConfigManicure.ElementAt(step),
+                    _ => throw new NotSupportedException($"Unsupported procedure type: {currentStep.Procedure.GetType()}")
+                };
 
 
-            if (currentStep != null && currentStepNumber.Keyboard == Keyboards.chooseDate)
-            {
-                var calendarMarkup = CalendarGenerator.GenerateCalendar(DateTime.Today);
+                if (currentStepNumber.Message == "Выберите дату" || currentStepNumber.Message == "Выберите другую дату")
+                {
+                    var calendarMarkup = DaySlotsKeyboard(
+                        DateTime.Today,
+                        DateTime.Today,
+                        DateTime.Today.AddDays(60),
+                        await _slotService.GetUnavailableDaySlots(ct)
+                        );
 
-                await botClient.SendMessage(chatId, "Выберите дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
+                    await botClient.SendMessage(chatId, "Выберите другую дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
 
-                return;
-            }
 
-            if (currentStepNumber != null)
-            {
-                await botClient.SendMessage(
-                    chatId: chatId,
-                    text: currentStepNumber.Message,
-                    replyMarkup: currentStepNumber.Keyboard);
+                    return;
+                } 
+                else if (currentStepNumber.Message == "Выберите время" || currentStepNumber.Message == "Выберите другое время")
+                {
+                    var slots = await _slotService.GetCurrentDayAvailableTimeSlots(currentStep.AppointmentDate, ct);
+
+                    await botClient.SendMessage(chatId, "Выберите другое время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: _ct);
+                }
+                else if (currentStepNumber.Message == "Выберите маникюр" || currentStepNumber.Message == "Выберите педикюр")
+                {
+                    await botClient.SendMessage(
+                        chatId: chatId,
+                        //тут надо починить в зависимости от маниюкра или педикюра
+                        text: Constants.StepsConfigManicure.ElementAt(2).Message,
+                        replyMarkup: currentStepNumber.Message == "Выберите маникюр" ? Keyboards.thirdManicureStep : Keyboards.thirdPedicureStep);
+                }
+                else if (currentStepNumber.Message == "Куда записываемся?")
+                {
+                    await botClient.SendMessage(
+                        chatId: chatId,
+                        text: Constants.StepsConfigManicure.ElementAt(1).Message,
+                        replyMarkup: Keyboards.secondStep);
+                }
             }
             else
             {
@@ -593,10 +757,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             }
         }
 
-        private async Task CreateAppointment()
-        {
-
-        }
         #endregion
 
 
@@ -620,3 +780,4 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
     }
 }
+
