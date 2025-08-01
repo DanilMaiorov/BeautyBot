@@ -8,8 +8,8 @@
         Start = 1,
         Help,
         Info,
-        ShowActiveAppointments,
-        ShowAllAppointments,
+        Show,
+
         Add,
         //AddAppointment,
         Del,

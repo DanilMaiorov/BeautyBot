@@ -67,7 +67,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             }
         }
 
-
         private async Task OnMessage(ITelegramBotClient botClient, Update update, Message message, CancellationToken ct)
         {
             Chat currentChat = update.Message.Chat;
@@ -84,7 +83,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 var currentUserTaskList = currentUser != null
                     ? await _appointmentService.GetUserAppointmentsByUserId(currentUser.UserId, _ct)
                     : null;
-
 
                 if (currentUser == null)
                 {
@@ -145,7 +143,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                             await _slotService.GetUnavailableDaySlots(ct)
                             );
 
-
                         await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: _ct);
 
                         await botClient.SendMessage(currentChat, "✖ - означает, что на выбранную дату нет свободных слотов", replyMarkup: calendarMarkup, cancellationToken: _ct);
@@ -187,11 +184,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         await ShowInfo(botClient, currentChat, _ct);
                         break;
 
-                    case Command.ShowActiveAppointments:
-                        await ShowAppointments(currentUser.UserId, botClient, currentChat, _ct);
-                        break;
-
-                    case Command.ShowAllAppointments:
+                     case Command.Show:
                         await ShowAppointments(currentUser.UserId, botClient, currentChat, _ct, true);
                         break;
 

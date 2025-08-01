@@ -32,8 +32,7 @@ namespace BeautyBot.src
                 { Command.Info, "Информация о боте" },
                 //{ Command.AddAppointment, "Записаться на процедуру" },
                 { Command.Add, "Записаться на процедуру" },
-                { Command.ShowActiveAppointments, "Показать активные записи" },
-                { Command.ShowAllAppointments, "Показать все записи" },
+                { Command.Show, "Показать все записи" },
                 { Command.CancelAppointment, "Отменить запись" },
                 { Command.FindAppointment, "Найти запись" },
                 { Command.EditAppointment, "Изменить запись" },
@@ -84,17 +83,6 @@ namespace BeautyBot.src
 
             var inputLower = input.ToLower();
 
-            if (inputLower.StartsWith("day_selected_"))
-            {
-                date = ParseDateFromString(inputLower);
-                inputLower = "/date";
-            } 
-            else if (inputLower.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || inputLower.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase))
-            {
-                month = GetFormattedMonth(inputLower);
-                inputLower = "/changemonth";
-
-            }
             //// Обработка других кнопок (дни недели, пустые дни, отключенные дни, отображение месяца)
             //else
             //{
@@ -103,76 +91,75 @@ namespace BeautyBot.src
             //}
 
 
-
             if (TimeOnly.TryParse(inputLower, out var time))
                 inputLower = "/time";
-            
-
-
 
             switch (inputLower)
             {
+                //основные
                 case "старт":
                     inputLower = "/start";
                     break;
-
                 case "записаться":
                     inputLower = "/create";
                     break;
+                case "посмотреть текущие записи":
+                    inputLower = "/show";
+                    break;
+                case "верно":
+                    inputLower = "/approve";
+                    break;
+                case "назад":
+                    inputLower = "/back";
+                    break;
+                case "отмена":
+                    inputLower = "/cancel";
+                    break;
 
-
-
+                //тут кейсы процедур
                 case "маникюр":
                     inputLower = "/manicure";
                     break;
-
                 case "педикюр":
                     inputLower = "/pedicure";
                     break;
-
-
-
+                
+                //тут кейсы типов процедур
                 case "френч":
                     inputLower = "/french";
                     break;
-
                 case "гель-лак":
                     inputLower = "/gelPolish";
                     break;
-
                 case "классический":
                     inputLower = "/classic";
                     break;
 
-
-
-
+                //тут кейсы изменения даты/времени
                 case "выбрать другую дату":
                     inputLower = "/changedate";
                     break;
-
-
-
                 case "выбрать другое время":
                     inputLower = "/changetime";
                     break;
 
 
-                case "верно":
-                    inputLower = "/approve";
-                    break;
 
-                case "назад":
-                    inputLower = "/back";
+                //тут кейсы даты и времени
+                case string s when inputLower.StartsWith("day_selected_"):
+                    date = ParseDateFromString(inputLower);
+                    inputLower = "/date";
                     break;
-
+                case string s when inputLower.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || inputLower.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase):
+                    month = GetFormattedMonth(inputLower);
+                    inputLower = "/changemonth";
+                    break;
 
                 default:
                     break;
             }
             return (inputLower, cutInput, month, date, time, taskGuid);
         }
-
 
         private static DateOnly ParseDateFromString(string input)
         {
@@ -192,25 +179,11 @@ namespace BeautyBot.src
             throw new FormatException("Could not parse date from string");
         }
 
-        private static DateOnly ParseTimeFromString(string input)
-        {
-
-            if (DateOnly.TryParseExact(input, "yyyy-MM-dd",
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly result))
-            {
-                return result;
-            }
-
-            throw new FormatException("Could not parse date from string");
-        }
-
-
         public static string GetFormattedMonth(string callbackData)
         {
             if (!callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) &&
                 !callbackData.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase)
                 )
-
             {
                 return "Неверный формат данных";
             }
@@ -218,7 +191,6 @@ namespace BeautyBot.src
             var dateFromCallback = callbackData.Split("_");
 
             var formattedDate = "";
-
 
             if (DateTime.TryParseExact(dateFromCallback[dateFromCallback.Length - 1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
             {
@@ -239,7 +211,6 @@ namespace BeautyBot.src
                 return "Ошибка парсинга даты";
             }
         }
-
 
         /// <summary>
         /// Метод рендера списка записей на процедуры
@@ -264,10 +235,36 @@ namespace BeautyBot.src
             }
         }
 
+        /// <summary>
+        /// Парсит строку в значение указанного enum, игнорируя регистр. 
+        /// Возвращает defaultValue, если парсинг не удался или строка пустая.
+        /// </summary>
+        /// <typeparam name="T">Тип enum</typeparam>
+        /// <param name="value">Строка для парсинга</param>
+        /// <param name="defaultValue">Значение по умолчанию</param>
+        /// <returns>Значение enum или defaultValue</returns>
+        public static T GetEnumValueOrDefault<T>(string value, T defaultValue) where T : struct, Enum
+        {
+            if (string.IsNullOrEmpty(value))
+                return defaultValue;
+
+            return Enum.TryParse<T>(value, true, out var result) ? result : defaultValue;
+        }
 
 
 
 
+        private static DateOnly ParseTimeFromString(string input)
+        {
+
+            if (DateOnly.TryParseExact(input, "yyyy-MM-dd",
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly result))
+            {
+                return result;
+            }
+
+            throw new FormatException("Could not parse date from string");
+        }
 
         // метод валидации задачи
         public static (string, Guid) Validate(string input, Guid taskGuid, IReadOnlyList<Appointment> appointmentsList)
@@ -279,7 +276,7 @@ namespace BeautyBot.src
                 input = "/del";
             else
                 input = "/updateappointment";
-            
+
 
             if (appointmentsList.Count != 0)
             {
@@ -297,28 +294,5 @@ namespace BeautyBot.src
             return (input, taskGuid);
         }
 
-
-
-
-
-
-
-
-
-        /// <summary>
-        /// Парсит строку в значение указанного enum, игнорируя регистр. 
-        /// Возвращает defaultValue, если парсинг не удался или строка пустая.
-        /// </summary>
-        /// <typeparam name="T">Тип enum</typeparam>
-        /// <param name="value">Строка для парсинга</param>
-        /// <param name="defaultValue">Значение по умолчанию</param>
-        /// <returns>Значение enum или defaultValue</returns>
-        public static T GetEnumValueOrDefault<T>(string value, T defaultValue) where T : struct, Enum
-        {
-            if (string.IsNullOrEmpty(value))
-                return defaultValue;
-
-            return Enum.TryParse<T>(value, true, out var result) ? result : defaultValue;
-        }
     }
 }
