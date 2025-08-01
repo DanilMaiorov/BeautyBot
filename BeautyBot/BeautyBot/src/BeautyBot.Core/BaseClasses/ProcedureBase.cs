@@ -14,9 +14,14 @@ namespace BeautyBot.src.BeautyBot.Core.BaseClasses
         public decimal Price { get; protected set; }
         public int Duration { get; protected set; }
 
-        protected ProcedureBase(string name, decimal price, Procedure procedure, int duration)
+        protected ProcedureBase()
         {
             Id = Guid.NewGuid();
+        }
+
+        protected ProcedureBase(string name, decimal price, Procedure procedure, int duration)
+        {
+            //Id = Guid.NewGuid();
             Procedure = procedure;
             Name = name;
             Price = price;

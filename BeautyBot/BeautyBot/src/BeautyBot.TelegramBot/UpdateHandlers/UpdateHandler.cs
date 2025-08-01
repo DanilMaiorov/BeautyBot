@@ -1,14 +1,12 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Services;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Core.Enums;
-using BeautyBot.src.BeautyBot.Core.Interfaces;
 using Telegram.Bot.Polling;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using System.Globalization;
-using System.Linq;
-using BeautyBot.src.BeautyBot.Application.Services;
 using Telegram.Bot.Types.ReplyMarkups;
+using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -19,11 +17,19 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         private readonly IAppointmentService _appointmentService;
         private readonly ISlotService _slotService;
 
-        private readonly IProcedureCatalogService _procedureCatalogService;
-        private readonly IPriceCalculationService _priceCalculationService;
+        //private readonly IProcedureCatalogService _procedureCatalogService;
+        //private readonly IPriceCalculationService _priceCalculationService;
 
 
         private readonly ICreateAppointmentService _createAppointmentService;
+
+
+
+        //логика сценариев
+        private readonly IEnumerable<IScenario> _scenarios;
+        private readonly IScenarioContextRepository _scenarioContextRepository;
+
+
 
         private readonly CancellationToken _ct;
 
@@ -34,20 +40,31 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         public UpdateHandler(
             IUserService userService,
             IAppointmentService appointmentService,
-            IProcedureCatalogService procedureCatalogService,
-            IPriceCalculationService priceCalculationService,
+            //IProcedureCatalogService procedureCatalogService,
+            //IPriceCalculationService priceCalculationService,
 
             ISlotService slotService,
             ICreateAppointmentService createAppointmentService,
+
+
+            IEnumerable<IScenario> scenarios,
+            IScenarioContextRepository contextRepository,
+
+
             CancellationToken ct)
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _appointmentService = appointmentService ?? throw new ArgumentNullException(nameof(appointmentService));
-            _procedureCatalogService = procedureCatalogService ?? throw new ArgumentNullException(nameof(procedureCatalogService));
-            _priceCalculationService = priceCalculationService ?? throw new ArgumentNullException(nameof(priceCalculationService));
+            //_procedureCatalogService = procedureCatalogService ?? throw new ArgumentNullException(nameof(procedureCatalogService));
+            //_priceCalculationService = priceCalculationService ?? throw new ArgumentNullException(nameof(priceCalculationService));
 
             _slotService = slotService;
             _createAppointmentService = createAppointmentService;
+
+            _scenarios = scenarios;
+            _scenarioContextRepository = contextRepository;
+
+
             _ct = ct;
         }
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
@@ -103,6 +120,24 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                 input = inputCommand.Replace("/", string.Empty);
 
+                //парсинг команды
+                Command command = Helper.GetEnumValueOrDefault<Command>(input);
+
+
+                //Работа с командой cancel и сценариями
+                if (command == Command.Cancel)
+                    await _scenarioContextRepository.ResetContext(telegramCurrentUserId, ct);
+
+                var scenarioContext = await _scenarioContextRepository.GetContext(telegramCurrentUserId, ct);
+
+                if (scenarioContext != null)
+                {
+                    await ProcessScenario(botClient, telegramCurrentUserId, scenarioContext, update, ct);
+
+                    return;
+                }
+
+
                 //проверка списка с шагами записи
                 var steps = await _createAppointmentService.GetSteps();
 
@@ -121,10 +156,10 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     switch (currentStep.Procedure)
                     {
                         case Pedicure:
-                            pedicureType = Helper.GetEnumValueOrDefault(input, pedicureType);
+                            pedicureType = Helper.GetEnumValueOrDefault<PedicureType>(input);
                             break;
                         case Manicure:
-                            manicureType = Helper.GetEnumValueOrDefault(input, manicureType);
+                            manicureType = Helper.GetEnumValueOrDefault<ManicureType>(input);
                             break;
                         default:
                             break;
@@ -156,15 +191,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateCompleted?.Invoke(eventMessage);
 
-                //объявление типа данных команды
-                Command command;
 
-                if (Enum.TryParse<Command>(input, true, out var result))
-                    command = result;
-                else
-                    command = default;
 
-                Helper.GetEnumValueOrDefault(input, command);
                 //обработка основных команд
                 switch (command)
                 {
@@ -223,6 +251,14 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                     //команды создания записи
                     case Command.Create:
+                        await ProcessScenario(
+                            botClient,
+                            telegramCurrentUserId,
+                            Helper.CreateScenarioContext(ScenarioType.AddAppointment, telegramCurrentUserId),
+                            update,
+                            ct);
+
+
                         await botClient.SendMessage(currentChat, "Куда записываемся?", replyMarkup: Keyboards.secondStep, cancellationToken: _ct);
                         break;
 
@@ -341,45 +377,24 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 input = inputCommand.Replace("/", string.Empty);
 
 
-                //объявление типа данных команды
-                Command command;
+                var scenarioContext = await _scenarioContextRepository.GetContext(telegramCurrentUserId, ct);
 
-                if (Enum.TryParse<Command>(input, true, out var result))
-                    command = result;
-                else
-                    command = default;
+                if (scenarioContext != null)
+                {
+                    await ProcessScenario(botClient, telegramCurrentUserId, scenarioContext, update, ct);
 
+                    return;
+                }
 
-                //объявление типа данных типа маникюра
-                ManicureType manicureType;
+                //парсинг команды
+                Command command = Helper.GetEnumValueOrDefault<Command>(input);
 
-                if (Enum.TryParse<ManicureType>(input, true, out var type))
-                    manicureType = type;
-                else
-                    manicureType = default;
-
-                Console.WriteLine(input);
+                //парсинг типа маникюра
+                ManicureType manicureType = Helper.GetEnumValueOrDefault<ManicureType>(input); ;
 
                 //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateCompleted?.Invoke(eventMessage);
 
-
-                //switch (manicureType)
-                //{
-                //    case ManicureType.None:
-                //        break;
-
-                //    default:
-                //        ProcedureFactory.CreateProcedure(input, out IProcedure procedure);
-
-                //        await _createAppointmentService.AddStep(procedure);
-
-                //        var calendarMarkup = CalendarGenerator.GenerateCalendar(DateTime.Today);
-
-                //        await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
-
-                //        return;
-                //}
 
                 //проверка списка с шагами записи
                 var steps = await _createAppointmentService.GetSteps();
@@ -392,11 +407,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 //обработка основных команд
                 switch (command)
                 {
-
-                    //case Command.AddAppointment:
-                    //    ProcedureFactory.CreateProcedure(inputText, out IProcedure procedure);
-                    //    await _appointmentService.AddAppointment(currentUser, procedure, DateTime.Now, _ct);
-                    //    break;
 
                     case Command.Del:
                         await _appointmentService.CancelAppointment(taskGuid, _ct);
@@ -615,6 +625,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             return new InlineKeyboardMarkup(keyboardButtons);
         }
 
+
+
         #region МЕТОДЫ КОМАНД
         private async Task ShowAppointments(
             Guid userId, 
@@ -676,7 +688,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             DateTime releaseDate = new DateTime(2025, 06, 23);
             await botClient.SendMessage(currentChat, $"Это BeautyBot версии 1.0 Beta. Релиз {releaseDate}.\n", cancellationToken: ct);
         }
-
 
         private async Task HandleBackCommand(
             Update update,
@@ -751,6 +762,80 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
 
         #endregion
+
+
+        #region МЕТОДЫ СЦЕНАРИЯ
+        /// <summary>
+        /// Возвращает экземпляр сценария по указанному типу.
+        /// </summary>
+        /// <param name="scenario">Тип сценария из перечисления ScenarioType</param>
+        /// <returns>Реализация интерфейса IScenario для запрошенного сценария</returns>
+        /// <exception cref="NotSupportedException">Выбрасывается при передаче неподдерживаемого значения ScenarioType</exception>
+        private IScenario GetScenario(ScenarioType scenario)
+        {
+            var currentScenario = _scenarios.FirstOrDefault(s => s.CanHandle(scenario));
+            return currentScenario ?? throw new NotSupportedException($"Сценарий {scenario} не поддерживается");
+        }
+
+        private async Task ProcessScenario(ITelegramBotClient botClient, long telegramUserId, ScenarioContext context, Update update, CancellationToken ct)
+        {
+            var scenario = GetScenario(context.CurrentScenario);
+
+            var scenarioResult = await scenario.HandleMessageAsync(botClient, context, update, ct);
+
+            if (scenarioResult == ScenarioResult.Completed)
+                await _scenarioContextRepository.ResetContext(telegramUserId, ct);
+            else
+                await _scenarioContextRepository.SetContext(telegramUserId, context, ct);
+        }
+        #endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken ct)

@@ -17,7 +17,10 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
             get { return _withRemove; }
             set { _withRemove = value; }
         }
-
+        public Pedicure(bool withRemove = true)
+        {
+            _withRemove = withRemove;
+        }
         public Pedicure(string name, decimal price, Procedure procedure, int duration, bool withRemove = true) : base(name, price, procedure, duration)
         {
             _withRemove = withRemove;

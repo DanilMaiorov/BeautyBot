@@ -8,6 +8,8 @@ using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
+using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
+using System.Collections;
 
 namespace BeautyBot
 {
@@ -48,8 +50,6 @@ namespace BeautyBot
             ISlotService _slotService = new SlotService(slotRepository);
 
 
-
-
             IProcedureCatalogService _procedureCatalogService = new ProcedureCatalogService(procedureDefinitionRepository);
             IPriceCalculationService _priceCalculationService = new PriceCalculationService();
 
@@ -65,15 +65,29 @@ namespace BeautyBot
 
 
 
+            //логика сценариев
+            IScenarioContextRepository _contextRepository = new InMemoryScenarioContextRepository();
+            IEnumerable<IScenario> _scenarios = new List<IScenario>
+            {
+                new AddAppointmentScenario(_userService, _appointmentService, _slotService),
+            };
+
+
 
             IUpdateHandler _updateHandler = new UpdateHandler(
                 _userService,
                 _appointmentService,
-                _procedureCatalogService,
-                _priceCalculationService,
+                //_procedureCatalogService,
+                //_priceCalculationService,
 
+                
                 _slotService,
                 _createAppointmentService,
+
+
+                _scenarios,
+                _contextRepository,
+
                 cts.Token);
 
             if (_updateHandler is UpdateHandler castHandler)

@@ -8,11 +8,11 @@ namespace BeautyBot.src
         private static readonly Dictionary<string, Func<IProcedure, IProcedure>> _procedureCreators =
             new Dictionary<string, Func<IProcedure, IProcedure>>(StringComparer.OrdinalIgnoreCase)
             {
-                ["french"] = current => current is Manicure ? new FrenchManicure() : new FrenchPedicure(),
+                ["френч"] = current => current is Manicure ? new FrenchManicure() : new FrenchPedicure(),
 
-                ["gelpolish"] = current => current is Manicure ? new GelPolishManicure() : new GelPolishPedicure(),
+                ["гель-лак"] = current => current is Manicure ? new GelPolishManicure() : new GelPolishPedicure(),
 
-                ["classic"] = current => current is Manicure ? new ClassicManicure() : new ClassicPedicure(),
+                ["классический"] = current => current is Manicure ? new ClassicManicure() : new ClassicPedicure(),
 
                 //["newProc"] = _ => new newProc(),
             };

@@ -24,7 +24,7 @@
 
         Create,
 
-
+        Cancel,
 
         Manicure,
         Pedicure,

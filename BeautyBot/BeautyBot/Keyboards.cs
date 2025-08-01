@@ -149,7 +149,7 @@ namespace BeautyBot
             ResizeKeyboard = true,    // Автоматическое изменение размера
             OneTimeKeyboard = false   // Остается открытой после использования
         };
-        }
+    }
 }
 
 
