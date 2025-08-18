@@ -1,13 +1,7 @@
-﻿using BeautyBot.src;
-using BeautyBot;
-using BeautyBot.src.BeautyBot.Application.Services;
-using BeautyBot.src.BeautyBot.Core.Enums;
-using BeautyBot.src.BeautyBot.Core.Interfaces;
+﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
-using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using System.Globalization;
-using System.Runtime.ConstrainedExecution;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -18,7 +12,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
     {
         private readonly IUserService _userService;
         private readonly IAppointmentService _appointmentService;
-
         private readonly ISlotService _slotService;
 
 
@@ -65,12 +58,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
                 case "ApproveTimeProcedure":
                     return await HandleApproveTimeStep(botClient, context, currentChat, currentUserInput, ct);
-
-                //case "List":
-                //    return await HandleChooseListStep(botClient, context, currentUser, currentChat, ct);
-
                 default:
-                    //await botClient.SendMessage(currentChat, "Неизвестный шаг сценария", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
+                    await botClient.SendMessage(currentChat, "Неизвестный шаг сценария", replyMarkup: Keyboards.firstStep, cancellationToken: ct);
                     break;
             }
             return ScenarioResult.Completed;
@@ -142,7 +131,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             return ScenarioResult.Transition;
         }
-
         private async Task<ScenarioResult> HandleApproveDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
         {
             if (userInput != Constants.Accept)
@@ -179,7 +167,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             return ScenarioResult.Transition;
         }
-
         private async Task<ScenarioResult> HandleChooseTimeStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
         {
             if (!TimeOnly.TryParse(userInput, out var time))
@@ -215,11 +202,22 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                 return ScenarioResult.Transition;
             }
 
+            var newAppointment = await _appointmentService.AddAppointment(
+                (BeautyBotUser)context.Data["User"],
+                (IProcedure)context.Data["TypeProcedure"],
+                (DateOnly)context.Data["Date"],
+                (TimeOnly)context.Data["Time"],
+                ct);
 
-            //тут по идее финиш - НАДО ДОДЕЛАТЬ
-            context.CurrentStep = "ChooseTimeProcedure";
+            await _slotService.UpdateSlot(newAppointment, ct);
 
-            return ScenarioResult.Transition;
+            await botClient.SendMessage(
+                chat, 
+                $"Вы успешно записаны🤗\n\nЖдём Вас {context.Data["Date"]} в {context.Data["Time"]}\n\nПо адресу г. Екатеринбург ул. Ленина 1, офис 101\n\nПрекрасного дня ☀️", 
+                replyMarkup: Keyboards.firstStep, 
+                cancellationToken: ct);
+
+            return ScenarioResult.Completed;
         }
 
 
@@ -276,7 +274,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
         //    return ScenarioResult.Completed;
         //}
 
-        private ReplyKeyboardMarkup TimeSlotsKeyboard(Dictionary<TimeOnly, bool> slots)
+        private ReplyKeyboardMarkup TimeSlotsKeyboard(Dictionary<TimeOnly, Appointment> slots)
         {
             if (slots.Count == 0)
                 Console.WriteLine("На выбранную дату записей нет");
@@ -428,9 +426,9 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             // Добавляем дополнительный ряд с кнопками навигации
             var navigationButtons = new[]
             {
-        new KeyboardButton("Назад"),
-        new KeyboardButton("Отмена")
-    };
+                new KeyboardButton("Назад"),
+                new KeyboardButton("Отмена")
+            };
 
             // Объединяем все ряды кнопок
             timeSlotButtons.Add(navigationButtons);

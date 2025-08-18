@@ -4,12 +4,11 @@ using BeautyBot.src.BeautyBot.Domain.Entities;
 
 namespace BeautyBot.src.BeautyBot.Domain.Services
 {
-    // Новый сервис для работы с записями (бронированием)
     public interface IAppointmentService
     {
         Task<IReadOnlyList<Appointment>> GetUserAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<IReadOnlyList<Appointment>> GetUserActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
-        Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateTime date, CancellationToken ct);
+        Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateOnly date, TimeOnly time, CancellationToken ct);
 
         Task CancelAppointment(Guid appointmentId, CancellationToken ct);
 

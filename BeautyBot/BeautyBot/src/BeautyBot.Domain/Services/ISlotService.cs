@@ -7,10 +7,10 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
     {
         //Task<Dictionary<TimeOnly, bool>> GetSlots(DateOnly date, CancellationToken ct);
 
-        Task UpdateSlot(DateOnly date, TimeOnly time, CancellationToken ct);
+        Task UpdateSlot(Appointment appointment, CancellationToken ct);
 
 
-        Task<Dictionary<TimeOnly, bool>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct);
+        Task<Dictionary<TimeOnly, Appointment>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct);
 
         Task<List<DateOnly>> GetUnavailableDaySlots(CancellationToken ct);
 

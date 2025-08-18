@@ -1,4 +1,5 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Services;
+﻿using BeautyBot.src.BeautyBot.Domain.Entities;
+using BeautyBot.src.BeautyBot.Domain.Services;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BeautyBot.src.BeautyBot.Application.Services
@@ -11,7 +12,7 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         //    return await _slotRepository.GetCurrentDayTimeSlots(date, ct);
         //}
 
-        public async Task<Dictionary<TimeOnly, bool>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct)
+        public async Task<Dictionary<TimeOnly, Appointment>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct)
         {
             //await GetUnavailableDaySlots(date, ct);
             return await _slotRepository.GetCurrentDayAvailableTimeSlots(date, ct);
@@ -25,9 +26,9 @@ namespace BeautyBot.src.BeautyBot.Application.Services
 
 
 
-        public async Task UpdateSlot(DateOnly date, TimeOnly time, CancellationToken ct)
+        public async Task UpdateSlot(Appointment appointment, CancellationToken ct)
         {
-            await _slotRepository.UpdateSlot(date, time);
+            await _slotRepository.UpdateSlot(appointment, ct);
 
             //ДОПИСАТЬ ЛОГИКУ КАЛЕНДАРИКА
         }

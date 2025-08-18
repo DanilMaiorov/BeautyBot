@@ -14,14 +14,14 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         public int AppointmentDuration { get; set; }
         public AppointmentState State { get; set; } // Active, Completed, Cancelled
 
-        public Appointment(Guid userId, IProcedure procedure, DateTime appointmentDate)
+        public Appointment(Guid userId, IProcedure procedure, DateOnly appointmentDate, TimeOnly appointmentTime)
         {
             Id = Guid.NewGuid();
             UserId = userId;
             Procedure = procedure;
             CreatedAt = DateTime.Now;
             StateChangedAt = DateTime.Now; 
-            AppointmentDate = appointmentDate;
+            AppointmentDate = appointmentDate.ToDateTime(appointmentTime);
             AppointmentDuration = procedure.Duration;
             State = AppointmentState.Active;
         }

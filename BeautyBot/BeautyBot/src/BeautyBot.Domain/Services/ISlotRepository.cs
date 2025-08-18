@@ -8,10 +8,10 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
     public interface ISlotRepository : IRepository<Appointment>
     {
         Task Add(Appointment appointment, CancellationToken ct);
-        Task<Dictionary<TimeOnly, bool>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct);
-        Task UpdateSlot(DateOnly date, TimeOnly time);
+        Task<Dictionary<TimeOnly, Appointment>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct);
+        Task UpdateSlot(Appointment appointment, CancellationToken ct);
 
-        Task<Dictionary <DateOnly, Dictionary<TimeOnly, bool>>> GetAllDaySlots();
+        Task<Dictionary <DateOnly, Dictionary<TimeOnly, Appointment>>> GetAllDaySlots();
 
 
 

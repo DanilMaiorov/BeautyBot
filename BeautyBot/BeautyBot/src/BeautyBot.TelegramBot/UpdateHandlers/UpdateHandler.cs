@@ -296,13 +296,13 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                         if (steps.Count == 4)
                         {
-                            await _appointmentService.AddAppointment(
-                                currentUser, 
-                                currentStep.Procedure,
-                                currentStep.AppointmentDate.ToDateTime(currentStep.AppointmentTime), 
-                                _ct);
+                            //await _appointmentService.AddAppointment(
+                            //    currentUser, 
+                            //    currentStep.Procedure,
+                            //    currentStep.AppointmentDate.ToDateTime(currentStep.AppointmentTime), 
+                            //    _ct);
 
-                            await _slotService.UpdateSlot(currentStep.AppointmentDate, currentStep.AppointmentTime, ct);
+                            //await _slotService.UpdateSlot(currentStep.AppointmentDate, currentStep.AppointmentTime, ct);
 
                             await botClient.SendMessage(currentChat, "Вы успешно записаны", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
 
@@ -315,7 +315,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                             await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: _ct);
                         }
                         break;
-
 
                     case Command.Exit:
                         Console.WriteLine("ExitExit");
@@ -487,7 +486,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
 
 
-        private ReplyKeyboardMarkup TimeSlotsKeyboard(Dictionary<TimeOnly, bool> slots)
+        private ReplyKeyboardMarkup TimeSlotsKeyboard(Dictionary<TimeOnly, Appointment> slots)
         {
             if (slots.Count < 0)
             {

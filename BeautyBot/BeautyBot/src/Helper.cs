@@ -125,7 +125,7 @@ namespace BeautyBot.src
                 case "педикюр":
                     inputLower = "/pedicure";
                     break;
-                
+
                 //тут кейсы типов процедур
                 case "френч":
                     inputLower = "/french";
@@ -169,7 +169,7 @@ namespace BeautyBot.src
 
             if (lastUnderscoreIndex == -1 || lastUnderscoreIndex == input.Length - 1)
                 throw new ArgumentException("Invalid input format");
-            
+
             string dateString = input.Substring(lastUnderscoreIndex + 1);
 
             if (DateOnly.TryParseExact(dateString, "yyyy-MM-dd",
@@ -323,28 +323,6 @@ namespace BeautyBot.src
 
             return await userService.GetUser(id, ct);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         private static DateOnly ParseTimeFromString(string input)
