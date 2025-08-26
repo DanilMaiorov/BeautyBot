@@ -17,8 +17,7 @@ namespace BeautyBot
     {
         static async Task Main(string[] args)
         {
-            //string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
-            string token = "8389262050:AAGxiMOnoOzcgrytZfmSnewL-PXFkv2fp38";
+            string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
 
             if (string.IsNullOrEmpty(token))
             {

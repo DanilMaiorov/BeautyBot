@@ -27,7 +27,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         public async Task<IReadOnlyList<Appointment>> GetAllAppointmentsByUserId(Guid userId, CancellationToken ct)
         {
             var result = _appointments
-                .Where(x => x.UserId == userId)
+                .Where(x => x.User.UserId == userId)
                 .ToList()
                 .AsReadOnly();
 
@@ -45,7 +45,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             }
 
             var result = _appointments
-                .Where(x => x.UserId == userId && x.State == AppointmentState.Active)
+                .Where(x => x.User.UserId == userId && x.State == AppointmentState.Active)
                 .ToList()
                 .AsReadOnly();
 

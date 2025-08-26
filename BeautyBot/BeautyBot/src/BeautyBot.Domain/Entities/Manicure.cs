@@ -12,6 +12,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         /// Флаг необходимости снятия старого маникюра
         /// </summary>
         private bool _withRemove;
+        public ManicureType Type { get; }
         public bool WithRemove
         {
             get { return _withRemove; }
@@ -21,8 +22,9 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         {
             _withRemove = withRemove;
         }
-        public Manicure(string name, decimal price, Procedure procedure, int duration, bool withRemove = true) : base(name, price, procedure, duration) 
+        public Manicure(string name, decimal price, ManicureType type, int duration, bool withRemove = true) : base(name, price, duration) 
         {
+            Type = type;
             _withRemove = withRemove;
         }
     }    

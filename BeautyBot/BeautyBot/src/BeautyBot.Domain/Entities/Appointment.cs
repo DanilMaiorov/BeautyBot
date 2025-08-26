@@ -7,7 +7,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
     {
         public Guid Id { get; set; }
         public BeautyBotUser User { get; set; }
-        public IProcedure Procedure { get; set; } // храню интерфейс или конкретный класс
+        public IProcedure Procedure { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime StateChangedAt { get; set; }
         public DateTime AppointmentDate { get; set; }

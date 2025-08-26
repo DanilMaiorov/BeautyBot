@@ -12,6 +12,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         /// Флаг необходимости снятия старого педикюра
         /// </summary>
         private bool _withRemove;
+        public PedicureType Type { get; }
         public bool WithRemove
         {
             get { return _withRemove; }
@@ -21,8 +22,9 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         {
             _withRemove = withRemove;
         }
-        public Pedicure(string name, decimal price, Procedure procedure, int duration, bool withRemove = true) : base(name, price, procedure, duration)
+        public Pedicure(string name, decimal price, PedicureType type, int duration, bool withRemove = true) : base(name, price, duration)
         {
+            Type = type;
             _withRemove = withRemove;
         }
     }

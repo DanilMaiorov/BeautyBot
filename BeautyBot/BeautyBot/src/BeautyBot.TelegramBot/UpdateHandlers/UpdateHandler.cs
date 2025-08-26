@@ -167,7 +167,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                     if (manicureType != ManicureType.None || pedicureType != PedicureType.None)
                     {
-                        var procedure = ProcedureFactory.CreateProcedure(input, currentStep.Procedure);
+                        var procedure = ProcedureFactory.CreateProcedure(input, input);
 
                         await _createAppointmentService.AddStep(procedure);
 

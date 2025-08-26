@@ -1,4 +1,5 @@
-﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
+﻿using BeautyBot.src.BeautyBot.Core.Enums;
+using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using System.Globalization;
@@ -77,14 +78,17 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
         }
         private async Task<ScenarioResult> HandleBaseProcedureStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
         {
-            context.Data["BaseProcedure"] = await GetBaseProcedure(userInput, ct);
+            if (userInput != Constants.Manicure && userInput != Constants.Pedicure)
+                throw new Exception("Что-то пошло не так");
+
+            context.Data["BaseProcedure"] = userInput;
 
             switch (context.Data["BaseProcedure"])
             {
-                case Manicure:
+                case Constants.Manicure:
                     await botClient.SendMessage(chat, "Выберите маникюр", replyMarkup: Keyboards.thirdManicureStep, cancellationToken: ct);
                     break;
-                case Pedicure:
+                case Constants.Pedicure:
                     await botClient.SendMessage(chat, "Выберите педикюр", replyMarkup: Keyboards.thirdPedicureStep, cancellationToken: ct);
                     break;
                 default:
@@ -102,7 +106,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             if (procedureType == null)
                 throw new Exception("Что-то пошло не так");
             
-            context.Data["TypeProcedure"] = ProcedureFactory.CreateProcedure(userInput, (IProcedure)procedureType);
+            context.Data["TypeProcedure"] = ProcedureFactory.CreateProcedure(userInput, (string)procedureType);
 
             var calendarMarkup = DaySlotsKeyboard(
                 DateTime.Today,
@@ -234,23 +238,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             else
             {
                 return await Task.FromResult(new Manicure());
-            }
-        }
-
-
-        private async Task<IProcedure> GetBaseProcedure(string userInput, CancellationToken ct)
-        {
-            if (userInput == Constants.Manicure)
-            {
-                return await Task.FromResult(new Manicure());
-            }
-            else if (userInput == Constants.Pedicure)
-            {
-                return await Task.FromResult(new Pedicure());
-            }
-            else
-            {
-                throw new Exception("Что-то пошло не так");
             }
         }
 

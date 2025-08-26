@@ -4,7 +4,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
 {
     public class GelPolishPedicure : Pedicure
     {
-        public PedicureType Type { get; } = PedicureType.GelPolish;
-        public GelPolishPedicure() : base("Педикюр гель-лак", 1400, Procedure.Manicure, 120) { }
+        public GelPolishPedicure(string name, decimal price, PedicureType type, int duration) : base(name, price, type, duration) { }
     }
 }

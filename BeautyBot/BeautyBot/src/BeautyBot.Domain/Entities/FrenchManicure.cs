@@ -4,7 +4,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
 {
     public class FrenchManicure : Manicure
     {
-        public ManicureType Type { get; } = ManicureType.French;
-        public FrenchManicure() : base("Маникюр френч", 1800, Procedure.Manicure, 120) { }
+        public FrenchManicure(string name, decimal price, ManicureType type, int duration) : base(name, price, type, duration) { }
     }
 }

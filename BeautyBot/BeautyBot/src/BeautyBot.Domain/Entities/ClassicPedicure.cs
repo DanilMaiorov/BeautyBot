@@ -4,7 +4,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
 {
     public class ClassicPedicure : Pedicure
     {
-        public PedicureType Type { get; } = PedicureType.Classic;
-        public ClassicPedicure() : base("Класссический педикюр", 1000, Procedure.Pedicure, 60) { }
+        public ClassicPedicure(string name, decimal price, PedicureType type, int duration) : base(name, price, type, duration) { }
     }
 }
