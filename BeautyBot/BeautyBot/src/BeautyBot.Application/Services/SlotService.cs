@@ -29,8 +29,6 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         public async Task UpdateSlot(Appointment appointment, CancellationToken ct)
         {
             await _slotRepository.UpdateSlot(appointment, ct);
-
-            //ДОПИСАТЬ ЛОГИКУ КАЛЕНДАРИКА
         }
 
 

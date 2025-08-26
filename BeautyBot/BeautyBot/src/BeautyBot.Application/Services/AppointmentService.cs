@@ -24,7 +24,7 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         // реализация метода интерфейса Add
         public async Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateOnly date,TimeOnly time, CancellationToken ct)
         {
-            var newAppointment = new Appointment(user.UserId, procedure, date, time);
+            var newAppointment = new Appointment(user, procedure, date, time);
 
             await _appointmentRepository.Add(newAppointment, ct);
 
