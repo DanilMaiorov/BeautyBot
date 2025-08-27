@@ -5,9 +5,11 @@
     /// </summary>
     public class BeautyBotUser
     {
-        public Guid UserId { get; init; }
-        public long TelegramUserId { get; init; }
-        public string TelegramUserName { get; init; }
-        public DateTime RegisteredAt { get; init; }
+        public Guid UserId { get; set; }
+        public long TelegramUserId { get; set; }
+        public string? TelegramUserName { get; set; }
+        public string? TelegramUserFirstName { get; set; }
+        public string? TelegramUserLastName { get; set; }
+        public DateTime RegisteredAt { get; set; }
     }
 }

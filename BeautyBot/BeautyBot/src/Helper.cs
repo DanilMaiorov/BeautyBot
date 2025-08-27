@@ -7,6 +7,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 using System.Globalization;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Domain.Services;
+using System.Security.Cryptography.X509Certificates;
 
 namespace BeautyBot.src
 {
@@ -250,6 +251,28 @@ namespace BeautyBot.src
                 ? result
                 : default;
         }
+
+
+        //ПЕРЕПИСАТЬ НА SWITCH CASE
+        public static object? GetEnumSubypeEnumOrDefault(string baseType, string subType)
+        {
+
+            var proc = GetEnumValueOrDefault<Procedure>(baseType);
+
+            if (proc is Procedure.Manicure)
+            {
+                return GetEnumValueOrDefault<ManicureType>(subType);
+            }
+            else if (proc is Procedure.Pedicure)
+            {
+                return GetEnumValueOrDefault<PedicureType>(subType);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
 
         /// <summary>
         /// Фабричный метод для создания контекста сценария

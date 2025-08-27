@@ -1,11 +1,6 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using BeautyBot.src.BeautyBot.Domain.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BeautyBot.src.BeautyBot.Application.Services
 {
@@ -27,7 +22,6 @@ namespace BeautyBot.src.BeautyBot.Application.Services
                 : null;
         }
 
-
         /// <summary>
         /// Метод регистрации нового юзера и добавление его в список
         /// </summary>
@@ -35,13 +29,15 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         /// <param name="telegramUserName">Имя в Телеграм</param>
         /// <param name="ct"></param>
         /// <returns>BeautyBotUser</returns>
-        public async Task<BeautyBotUser> RegisterUser(long telegramUserId, string telegramUserName, CancellationToken ct)
+        public async Task<BeautyBotUser> RegisterUser(long userId, string userName, string firstName, string lastName, CancellationToken ct)
         {
             var newUser = new BeautyBotUser
             {
                 UserId = Guid.NewGuid(),
-                TelegramUserId = telegramUserId,
-                TelegramUserName = telegramUserName,
+                TelegramUserId = userId,
+                TelegramUserName = userName,
+                TelegramUserFirstName = firstName,
+                TelegramUserLastName = lastName,
                 RegisteredAt = DateTime.Now
             };
 
