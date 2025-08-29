@@ -89,6 +89,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             Chat currentChat = update.Message.Chat;
             long telegramCurrentUserId = update.Message.From.Id;
             string telegramCurrentUserName = update.Message.From.Username;
+            string telegramUserFirstName = update.Message.From.Username;
+            string telegramUserLastName = update.Message.From.Username;
             string input = update.Message.Text;
 
             string eventMessage = "";
@@ -198,8 +200,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 {
                     case Command.Start:
                         if (currentUser == null)
-                            currentUser = await _userService.RegisterUser(telegramCurrentUserId, telegramCurrentUserName, _ct);
-                        
+                            currentUser = await _userService.RegisterUser(telegramCurrentUserId, telegramCurrentUserName, telegramUserFirstName, telegramUserLastName, _ct);
+
                         await botClient.SendMessage(currentChat, "Спасибо за регистрацию", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
                         //await Helper.CommandsRender(currentChat, botClient, _ct);
                         break;

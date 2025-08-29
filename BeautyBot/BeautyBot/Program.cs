@@ -10,6 +10,8 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using System.Collections;
+//using BeautyBot.src.BeautyBot.Infrastructure.Repositories.Sql;
+using BeautyBot.src.BeautyBot.Core.DataAcess.Context;
 
 namespace BeautyBot
 {
@@ -17,7 +19,9 @@ namespace BeautyBot
     {
         static async Task Main(string[] args)
         {
-            string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
+            //string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
+            string token = "8062262120:AAFwu-kWD_FGVaHpSnG3ZLKN-tPZCcUNK8c";
+            string connectionString = "Server=localhost;Port=5432;Database=BeautyBot;Username=postgres;Password=dan1q!jobana;";
 
             if (string.IsNullOrEmpty(token))
             {
@@ -61,6 +65,11 @@ namespace BeautyBot
 
             ICreateAppointmentService _createAppointmentService = new CreateAppointmentService(createAppointmentTemplate);
 
+
+
+            //POSTGRESQL
+            IDataContextFactory<BeautyBotDataContext> factory = new DataContextFactory(connectionString);
+            //сделать класс который обрабатывает всё это в БД вместо памяти
 
 
 

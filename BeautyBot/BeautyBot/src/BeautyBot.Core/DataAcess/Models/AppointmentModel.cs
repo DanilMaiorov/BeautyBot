@@ -1,31 +1,25 @@
 ﻿using BeautyBot.src.BeautyBot.Core.Enums;
-using BeautyBot.src.BeautyBot.Core.Interfaces;
-using BeautyBot.src.BeautyBot.Domain.Entities;
 using LinqToDB.Mapping;
 
 namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
 {
-
     [Table("Appointments")]
     public class AppointmentModel
     {
         [Column("Id"), PrimaryKey]
         public Guid Id { get; set; }
 
-        [Column("UserId")]
+        [Column("UserId"), NotNull]
         public Guid UserId { get; set; }
 
         [Association(ThisKey = nameof(UserId), OtherKey = nameof(BeautyBotUserModel.UserId))]
-        public BeautyBotUserModel User { get; set; } = null!;
+        public BeautyBotUserModel User { get; set; }
 
-        [Column("ProcedureId")]
-        public Guid ProcedureId { get; set; }
+        [Column("ProcedureId"), NotNull]
+        public string ProcedureId { get; set; }
 
-        [Column("ProcedureName"), NotNull] // Храним название процедуры для фабрики
-        public string ProcedureName { get; set; } = string.Empty;
-
-        [Column("ProcedureBaseType"), NotNull] // Базовый тип: Manicure или Pedicure
-        public string ProcedureBaseType { get; set; } = string.Empty;
+        [Association(ThisKey = nameof(ProcedureId), OtherKey = nameof(ProcedureModel.Id))]
+        public ProcedureModel Procedure { get; set; }
 
         [Column("CreatedAt"), NotNull]
         public DateTime CreatedAt { get; set; }
@@ -39,7 +33,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
         [Column("AppointmentDuration"), NotNull]
         public int AppointmentDuration { get; set; }
 
-        [Column("AppointmentState"), NotNull]
+        [Column("State"), NotNull]
         public AppointmentState State { get; set; }
     }
 }
