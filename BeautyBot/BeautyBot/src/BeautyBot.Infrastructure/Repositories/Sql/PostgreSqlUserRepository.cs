@@ -18,18 +18,18 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         {
             using var dbContext = _factory.CreateDataContext();
 
-            var user = await dbContext.BeautyBotUsers.FirstOrDefaultAsync(x => x.UserId == userId);
+            var userModel = await dbContext.BeautyBotUsers.FirstOrDefaultAsync(x => x.UserId == userId);
 
-            return BeautyBotUserModelMapper.MapFromModel(user);
+            return BeautyBotUserModelMapper.MapFromModel(userModel);
         }
 
         public async Task<BeautyBotUser?> GetUserByTelegramUserId(long telegramUserId, CancellationToken ct)
         {
             using var dbContext = _factory.CreateDataContext();
 
-            var user = await dbContext.BeautyBotUsers.FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId);
+            var userModel = await dbContext.BeautyBotUsers.FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId);
 
-            return BeautyBotUserModelMapper.MapFromModel(user);
+            return BeautyBotUserModelMapper.MapFromModel(userModel);
         }
 
         public async Task Add(BeautyBotUser user, CancellationToken ct)
@@ -37,7 +37,6 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             using var dbContext = _factory.CreateDataContext();
 
             await dbContext.InsertAsync(BeautyBotUserModelMapper.MapToModel(user), token: ct);
-
         }
     }
 }

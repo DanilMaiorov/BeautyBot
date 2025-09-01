@@ -89,8 +89,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             Chat currentChat = update.Message.Chat;
             long telegramCurrentUserId = update.Message.From.Id;
             string telegramCurrentUserName = update.Message.From.Username;
-            string telegramUserFirstName = update.Message.From.Username;
-            string telegramUserLastName = update.Message.From.Username;
+            string telegramUserFirstName = update.Message.From.FirstName;
+            string telegramUserLastName = update.Message.From.LastName;
             string input = update.Message.Text;
 
             string eventMessage = "";
@@ -202,7 +202,11 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         if (currentUser == null)
                             currentUser = await _userService.RegisterUser(telegramCurrentUserId, telegramCurrentUserName, telegramUserFirstName, telegramUserLastName, _ct);
 
-                        await botClient.SendMessage(currentChat, "Спасибо за регистрацию", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
+                        await botClient.SendMessage(
+                            currentChat, 
+                            $"Спасибо за регистрацию, {(string.IsNullOrEmpty(telegramUserFirstName) ? telegramCurrentUserName : telegramUserFirstName)} 🤗", 
+                            replyMarkup: Keyboards.firstStep, 
+                            cancellationToken: _ct);
                         //await Helper.CommandsRender(currentChat, botClient, _ct);
                         break;
 
@@ -326,7 +330,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         await botClient.SendMessage(
                             currentChat,
                             "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n",
-                            replyMarkup: currentUser != null ? Keyboards.start : Keyboards.firstStep,
+                            replyMarkup: currentUser != null ? Keyboards.firstStep : Keyboards.start,
                             cancellationToken: _ct);
 
                         await _createAppointmentService.RefreshSteps();

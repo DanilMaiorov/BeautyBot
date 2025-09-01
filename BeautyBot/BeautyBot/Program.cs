@@ -19,17 +19,16 @@ namespace BeautyBot
     {
         static async Task Main(string[] args)
         {
-            //string token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
-            string token = "8062262120:AAFwu-kWD_FGVaHpSnG3ZLKN-tPZCcUNK8c";
-            string connectionString = "Server=localhost;Port=5432;Database=BeautyBot;Username=postgres;Password=dan1q!jobana;";
+            string botToken = Environment.GetEnvironmentVariable("BeautyBot_token", EnvironmentVariableTarget.User);
+            string connectionString = Environment.GetEnvironmentVariable("ConnectionStringPostgreSQL_BeautyBot", EnvironmentVariableTarget.User);
 
-            if (string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Bot token not found. Please set the BEAUTY_BOT_TOKEN environment variable.");
+                Console.WriteLine("Bot token or connection string not found. Please set the environment variables.");
                 return;
             }
 
-            var botClient = new TelegramBotClient(token);
+            var botClient = new TelegramBotClient(botToken);
 
             ReceiverOptions receiverOptions = new()
             {
@@ -41,6 +40,9 @@ namespace BeautyBot
             //POSTGRESQL
             //сделать класс который обрабатывает всё это в БД вместо памяти
             IDataContextFactory<BeautyBotDataContext> factory = new DataContextFactory(connectionString);
+
+
+
 
 
             //IUserRepository userRepository = new InMemoryUserRepository();
