@@ -16,7 +16,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
         public BeautyBotUserModel User { get; set; }
 
         [Column("ProcedureId"), NotNull]
-        public string ProcedureId { get; set; }
+        public Guid ProcedureId { get; set; }
 
         [Association(ThisKey = nameof(ProcedureId), OtherKey = nameof(ProcedureModel.Id))]
         public ProcedureModel Procedure { get; set; }

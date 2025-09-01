@@ -6,10 +6,10 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
     [Table("Slots")]
     public class SlotModel
     {
-        [Column("Date"), NotNull]
+        [Column("Date"), PrimaryKey]
         public DateTime Date { get; set; }
 
-        [Column("StartTime"), NotNull]
+        [Column("StartTime"), PrimaryKey]
         public DateTime StartTime { get; set; }
 
         [Column("Duration"), NotNull]

@@ -12,6 +12,7 @@ using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using System.Collections;
 //using BeautyBot.src.BeautyBot.Infrastructure.Repositories.Sql;
 using BeautyBot.src.BeautyBot.Core.DataAcess.Context;
+using BeautyBot.src.BeautyBot.Core.DataAcess.Database;
 
 namespace BeautyBot
 {
@@ -37,9 +38,30 @@ namespace BeautyBot
 
             using var cts = new CancellationTokenSource();
 
+
+
             //POSTGRESQL
             //сделать класс который обрабатывает всё это в БД вместо памяти
             IDataContextFactory<BeautyBotDataContext> factory = new DataContextFactory(connectionString);
+
+
+
+
+            DatabaseInitializer databaseInitializer = new DatabaseInitializer(factory);
+
+
+            databaseInitializer.Initialize();
+
+
+
+
+
+
+
+
+
+
+
 
 
 
