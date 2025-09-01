@@ -112,7 +112,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                 DateTime.Today,
                 DateTime.Today,
                 DateTime.Today.AddDays(60),
-                await _slotService.GetUnavailableDaySlots(ct)
+                //await _slotService.GetUnavailableDaySlots(ct)
+                new List<DateOnly>()
                 );
 
             await botClient.SendMessage(chat, "Выберите дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: ct);
@@ -143,7 +144,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                     DateTime.Today,
                     DateTime.Today,
                     DateTime.Today.AddDays(60),
-                    await _slotService.GetUnavailableDaySlots(ct)
+                    //await _slotService.GetUnavailableDaySlots(ct)
+                    new List<DateOnly>()
                     );
 
                 await botClient.SendMessage(chat, "Выберите другую дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: ct);
@@ -163,7 +165,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             if (dateObj is not DateOnly date)
                 throw new InvalidCastException($"Ожидался DateOnly, получен {dateObj?.GetType().Name ?? "null"}");
 
-            var slots = await _slotService.GetCurrentDayAvailableTimeSlots(date, ct);
+            //var slots = await _slotService.GetCurrentDayAvailableTimeSlots(date, ct);
+            var slots = new Dictionary<TimeOnly, Appointment>();
 
             await botClient.SendMessage(chat, "Выберите время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: ct);
 
@@ -195,7 +198,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                 if (dateObj is not DateOnly date)
                     throw new InvalidCastException($"Ожидался DateOnly, получен {dateObj?.GetType().Name ?? "null"}");
 
-                var slots = await _slotService.GetCurrentDayAvailableTimeSlots(date, ct);
+                //var slots = await _slotService.GetCurrentDayAvailableTimeSlots(date, ct);
+                var slots = new Dictionary<TimeOnly, Appointment>();
 
                 await botClient.SendMessage(chat, "Выберите другое время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: ct);
 
@@ -213,7 +217,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                 (TimeOnly)context.Data["Time"],
                 ct);
 
-            await _slotService.UpdateSlot(newAppointment, ct);
+            //НАДО РЕАЛИЗОВАТЬ
+            //await _slotService.UpdateSlot(newAppointment, ct);
 
             await botClient.SendMessage(
                 chat, 

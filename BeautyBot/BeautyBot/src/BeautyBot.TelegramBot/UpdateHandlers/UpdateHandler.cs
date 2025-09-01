@@ -177,7 +177,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                             DateTime.Today,
                             DateTime.Today,
                             DateTime.Today.AddDays(60),
-                            await _slotService.GetUnavailableDaySlots(ct)
+                            //await _slotService.GetUnavailableDaySlots(ct)
+                            new List<DateOnly>()
                             );
 
                         await botClient.SendMessage(currentChat, "Выберите дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: _ct);
@@ -316,7 +317,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         }
                         else if (steps.Count == 3)
                         {
-                            var slots = await _slotService.GetCurrentDayAvailableTimeSlots(currentStep.AppointmentDate, ct);
+                            //var slots = await _slotService.GetCurrentDayAvailableTimeSlots(currentStep.AppointmentDate, ct);
+                            var slots = new Dictionary<TimeOnly, Appointment>();
 
                             await botClient.SendMessage(currentChat, "Выберите время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: _ct);
                         }
@@ -460,7 +462,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                                 newDisplayMonth,
                                 DateTime.Today,
                                 DateTime.Today.AddDays(60),
-                                await _slotService.GetUnavailableDaySlots(ct)
+                                //await _slotService.GetUnavailableDaySlots(ct)
+                                new List<DateOnly>()
                                 );
 
                             await botClient.EditMessageReplyMarkup(currentChat, update.CallbackQuery.Message.Id, replyMarkup: newCalendarMarkup, cancellationToken: _ct);
@@ -724,17 +727,18 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         DateTime.Today,
                         DateTime.Today,
                         DateTime.Today.AddDays(60),
-                        await _slotService.GetUnavailableDaySlots(ct)
+                        new List<DateOnly>()
+                        //await _slotService.GetUnavailableDaySlots(ct)
                         );
 
                     await botClient.SendMessage(chatId, "Выберите другую дату", replyMarkup: calendarMarkup, cancellationToken: _ct);
-
 
                     return;
                 } 
                 else if (currentStepNumber.Message == "Выберите время" || currentStepNumber.Message == "Выберите другое время")
                 {
-                    var slots = await _slotService.GetCurrentDayAvailableTimeSlots(currentStep.AppointmentDate, ct);
+                    //var slots = await _slotService.GetCurrentDayAvailableTimeSlots(currentStep.AppointmentDate, ct);
+                    var slots = new Dictionary<TimeOnly, Appointment>();
 
                     await botClient.SendMessage(chatId, "Выберите другое время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: _ct);
                 }

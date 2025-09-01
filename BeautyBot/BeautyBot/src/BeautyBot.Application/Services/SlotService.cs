@@ -7,49 +7,81 @@ namespace BeautyBot.src.BeautyBot.Application.Services
     public class SlotService : ISlotService
     {
         private readonly ISlotRepository _slotRepository;
-        //public async Task<Dictionary<TimeOnly, bool>> GetSlots(DateOnly date, CancellationToken ct)
-        //{
-        //    return await _slotRepository.GetCurrentDayTimeSlots(date, ct);
-        //}
 
-        public async Task<Dictionary<TimeOnly, Appointment>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct)
-        {
-            //await GetUnavailableDaySlots(date, ct);
-            return await _slotRepository.GetCurrentDayAvailableTimeSlots(date, ct);
-        }
-
-
-        public async Task<List<DateOnly>> GetUnavailableDaySlots(CancellationToken ct)
-        {
-            return await _slotRepository.GetUnavailableDaySlots(ct);
-        }
-
-
-
-        public async Task UpdateSlot(Appointment appointment, CancellationToken ct)
-        {
-            await _slotRepository.UpdateSlot(appointment, ct);
-        }
-
-
-
+        CancellationToken ct;
         public SlotService(ISlotRepository repository)
         {
             _slotRepository = repository;
         }
 
-
-
-
-        public async Task<List<DateOnly>> GetAvailableDaySlots(CancellationToken ct)
+        public IEnumerable<Slot> GenerateDailySlots(DateTime date, int intervalMinutes)
         {
-            return await _slotRepository.GetAvailableDaySlots(ct);
+            var startTime = new DateTime(date.Year, date.Month, date.Day, 10, 0, 0);
+            var endTime = new DateTime(date.Year, date.Month, date.Day, 19, 0, 0);
+            var interval = TimeSpan.FromMinutes(intervalMinutes);
+
+            for (var time = startTime; time < endTime; time = time.Add(interval))
+            {
+                yield return new Slot
+                {
+                    Date = date,
+                    StartTime = time,
+                    Duration = (int)interval.TotalMinutes,
+                    AppointmentId = null
+                };
+            }
+        }
+
+        public async Task GenerateYearlySlots(CancellationToken ct)
+        {
+            var allSlots = new List<Slot>();
+            var currentDate = DateTime.Today;
+            var lastDay = currentDate.AddYears(1);
+
+            for (var date = currentDate; date < lastDay; date = date.AddDays(1))
+            {
+                var dailySlots = GenerateDailySlots(date, 90);
+
+                allSlots.AddRange(dailySlots);
+            }
+            await _slotRepository.AddRange(allSlots, ct);
         }
 
 
-        private async Task GetUnavailableDays()
-        {
-            var days = await _slotRepository.GetAllDaySlots();
-        }
+
+
+        //public async Task<Dictionary<TimeOnly, bool>> GetSlots(DateOnly date, CancellationToken ct)
+        //{
+        //    return await _slotRepository.GetCurrentDayTimeSlots(date, ct);
+        //}
+
+        //public async Task<Dictionary<TimeOnly, Appointment>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct)
+        //{
+        //    //await GetUnavailableDaySlots(date, ct);
+        //    return await _slotRepository.GetCurrentDayAvailableTimeSlots(date, ct);
+        //}
+
+
+        //public async Task<List<DateOnly>> GetUnavailableDaySlots(CancellationToken ct)
+        //{
+        //    return await _slotRepository.GetUnavailableDaySlots(ct);
+        //}
+
+
+        //public async Task UpdateSlot(Appointment appointment, CancellationToken ct)
+        //{
+        //    await _slotRepository.UpdateSlot(appointment, ct);
+        //}
+
+        //public async Task<List<DateOnly>> GetAvailableDaySlots(CancellationToken ct)
+        //{
+        //    return await _slotRepository.GetAvailableDaySlots(ct);
+        //}
+
+
+        //private async Task GetUnavailableDays()
+        //{
+        //    var days = await _slotRepository.GetAllDaySlots();
+        //}
     }   
 }

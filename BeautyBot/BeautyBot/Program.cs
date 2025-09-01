@@ -13,6 +13,7 @@ using System.Collections;
 //using BeautyBot.src.BeautyBot.Infrastructure.Repositories.Sql;
 using BeautyBot.src.BeautyBot.Core.DataAcess.Context;
 using BeautyBot.src.BeautyBot.Core.DataAcess.Database;
+using LinqToDB;
 
 namespace BeautyBot
 {
@@ -22,12 +23,18 @@ namespace BeautyBot
         {
             string botToken = Environment.GetEnvironmentVariable("BeautyBot_token", EnvironmentVariableTarget.User);
             string connectionString = Environment.GetEnvironmentVariable("ConnectionStringPostgreSQL_BeautyBot", EnvironmentVariableTarget.User);
+            string providerName = ProviderName.PostgreSQL;
+
 
             if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Bot token or connection string not found. Please set the environment variables.");
-                return;
+                if (string.IsNullOrEmpty(botToken))
+                    Console.WriteLine("Bot token not found. Please set the environment variable.");
+
+                if (string.IsNullOrEmpty(connectionString))
+                    Console.WriteLine("Connection string not found. Please set the environment variable.");
             }
+
 
             var botClient = new TelegramBotClient(botToken);
 
@@ -42,50 +49,37 @@ namespace BeautyBot
 
             //POSTGRESQL
             //сделать класс который обрабатывает всё это в БД вместо памяти
-            IDataContextFactory<BeautyBotDataContext> factory = new DataContextFactory(connectionString);
+            IDataContextFactory<BeautyBotDataContext> factory = new DataContextFactory(connectionString, providerName);
 
-
-
-
+            //Инициализация БД
             DatabaseInitializer databaseInitializer = new DatabaseInitializer(factory);
-
 
             databaseInitializer.Initialize();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            ;
 
             //IUserRepository userRepository = new InMemoryUserRepository();
             IUserRepository userRepository = new PostgreSqlUserRepository(factory);
 
+            ISlotRepository slotRepository = new PostgreSqlSlotRepository(factory);
 
 
+            ISlotService _slotService = new SlotService(slotRepository);
 
+            await _slotService.GenerateYearlySlots(cts.Token);
 
 
             IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository();
             //IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository(); ТУТ НУЖНО БУДЕТ ЗАМЕНИТЬ НА ХРАНЕНИЕ В ЛОКАЛЬНЫХ ФАЙЛАХ
 
             IProcedureDefinitionRepository procedureDefinitionRepository = new InMemoryProcedureDefinitionRepository();
-            ISlotRepository slotRepository = new InMemorySlotRepository();
+            //ISlotRepository slotRepository = new InMemorySlotRepository();
 
             IUserService _userService = new UserService(userRepository);
 
             IAppointmentService _appointmentService = new AppointmentService(appointmentRepository, procedureDefinitionRepository, slotRepository);
 
-            ISlotService _slotService = new SlotService(slotRepository);
+            //ISlotService _slotService = new SlotService(slotRepository);
 
 
             IProcedureCatalogService _procedureCatalogService = new ProcedureCatalogService(procedureDefinitionRepository);

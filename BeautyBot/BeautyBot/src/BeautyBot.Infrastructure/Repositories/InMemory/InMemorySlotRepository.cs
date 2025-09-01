@@ -89,5 +89,15 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
             return await Task.FromResult(days);
         }
+
+        public Task AddRange(IEnumerable<Slot> entities, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Add(Slot entity, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
