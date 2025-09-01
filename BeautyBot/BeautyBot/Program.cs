@@ -38,7 +38,18 @@ namespace BeautyBot
 
             using var cts = new CancellationTokenSource();
 
-            IUserRepository userRepository = new InMemoryUserRepository();
+            //POSTGRESQL
+            //сделать класс который обрабатывает всё это в БД вместо памяти
+            IDataContextFactory<BeautyBotDataContext> factory = new DataContextFactory(connectionString);
+
+
+            //IUserRepository userRepository = new InMemoryUserRepository();
+            IUserRepository userRepository = new PostgreSqlUserRepository(factory);
+
+
+
+
+
 
             IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository();
             //IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository(); ТУТ НУЖНО БУДЕТ ЗАМЕНИТЬ НА ХРАНЕНИЕ В ЛОКАЛЬНЫХ ФАЙЛАХ
@@ -67,9 +78,7 @@ namespace BeautyBot
 
 
 
-            //POSTGRESQL
-            IDataContextFactory<BeautyBotDataContext> factory = new DataContextFactory(connectionString);
-            //сделать класс который обрабатывает всё это в БД вместо памяти
+
 
 
 

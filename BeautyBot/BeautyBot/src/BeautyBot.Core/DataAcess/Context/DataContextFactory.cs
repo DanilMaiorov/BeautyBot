@@ -1,6 +1,4 @@
-﻿using BeautyBot.src.BeautyBot.Infrastructure.Repositories.Sql;
-
-namespace BeautyBot.src.BeautyBot.Core.DataAcess.Context
+﻿namespace BeautyBot.src.BeautyBot.Core.DataAcess.Context
 {
     public class DataContextFactory : IDataContextFactory<BeautyBotDataContext>
     {
