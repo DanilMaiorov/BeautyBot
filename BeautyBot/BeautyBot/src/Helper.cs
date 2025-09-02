@@ -8,6 +8,7 @@ using System.Globalization;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using System.Security.Cryptography.X509Certificates;
+using static LinqToDB.Reflection.Methods.LinqToDB.Insert;
 
 namespace BeautyBot.src
 {
@@ -388,5 +389,18 @@ namespace BeautyBot.src
             return (input, taskGuid);
         }
 
+
+
+
+        public static string GetBaseProcedureName(object procedureType)
+        {
+            if (procedureType is Manicure)
+                return "Manicure";
+            
+            if (procedureType is Pedicure)
+                return "Pedicure";
+            
+            throw new Exception("Неизвестный тип процедуры");
+        }
     }
 }

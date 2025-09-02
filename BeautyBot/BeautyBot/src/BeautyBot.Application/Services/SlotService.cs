@@ -1,6 +1,5 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BeautyBot.src.BeautyBot.Application.Services
 {
@@ -34,6 +33,10 @@ namespace BeautyBot.src.BeautyBot.Application.Services
 
         public async Task GenerateYearlySlots(CancellationToken ct)
         {
+            // Проверяем, есть ли уже слоты в базе данных через репозиторий
+            if (await _slotRepository.AnySlotsExist())
+                return;
+
             var allSlots = new List<Slot>();
             var currentDate = DateTime.Today;
             var lastDay = currentDate.AddYears(1);
@@ -47,8 +50,29 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             await _slotRepository.AddRange(allSlots, ct);
         }
 
+        public async Task<IEnumerable<Slot>> GetSlotsByDate(DateOnly date, CancellationToken ct)
+        {
+            var slots = await _slotRepository.GetSlotsByDate(date);
 
+            return slots.Where(slot => slot.AppointmentId == null);
+        }
 
+        public async Task<IEnumerable<Slot>> GetUnavailableSlotsByDate(DateOnly date, CancellationToken ct)
+        {
+            var slots = await _slotRepository.GetSlotsByDate(date);
+
+            return slots.Where(slot => slot.AppointmentId != null);
+        }
+
+        public async Task UpdateSlotFromAppointment(Appointment appointment, CancellationToken ct)
+        {
+            await _slotRepository.UpdateSlot(
+                DateOnly.FromDateTime(appointment.AppointmentDate),
+                TimeOnly.FromDateTime(appointment.AppointmentDate),
+                appointment.Id,
+                ct
+            );
+        }
 
         //public async Task<Dictionary<TimeOnly, bool>> GetSlots(DateOnly date, CancellationToken ct)
         //{

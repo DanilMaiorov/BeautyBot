@@ -1,11 +1,6 @@
 ﻿using BeautyBot.src.BeautyBot.Core.Enums;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 {

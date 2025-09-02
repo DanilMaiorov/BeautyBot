@@ -5,9 +5,7 @@ using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using LinqToDB;
 using LinqToDB.Data;
-using System;
-using System.Globalization;
-using Telegram.Bot.Types.ReplyMarkups;
+using System.Reflection;
 
 namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 {
@@ -55,17 +53,39 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             throw new NotImplementedException();
         }
 
+        public async Task<IEnumerable<Slot>> GetSlotsByDate(DateOnly date)
+        {
+            var dbContext = _factory.CreateDataContext();
+
+            var slots = await dbContext.Slots
+                .Where(s => s.Date.Year == date.Year && s.Date.Month == date.Month && s.Date.Day == date.Day)
+                .ToListAsync();
+
+            return slots.Select(SlotModelMapper.MapFromModel);
+        }
+
+        public async Task<bool> AnySlotsExist()
+        {
+            var dbContext = _factory.CreateDataContext();
+
+            var count = await dbContext.GetTable<SlotModel>().CountAsync();
+
+            return count > 0;
+        }
 
 
-        //public async Task UpdateSlot(Appointment appointment, CancellationToken ct)
-        //{
-        //    var date = DateOnly.FromDateTime(appointment.AppointmentDate);
-        //    var time = TimeOnly.FromDateTime(appointment.AppointmentDate);
 
-        //    var currentDaySlots = _slots[date];
+        public async Task UpdateSlot(DateOnly date, TimeOnly time, Guid appointmentId, CancellationToken ct)
+        {
+            var dbContext = _factory.CreateDataContext();
 
-        //    await Task.FromResult(currentDaySlots[time] = appointment);
-        //}
+            var targetDateTime = date.ToDateTime(time);
+
+            await dbContext.Slots
+                .Where(s => s.Date.Year == date.Year && s.Date.Month == date.Month && s.Date.Day == date.Day && s.StartTime.Hour == time.Hour && s.StartTime.Minute == time.Minute)
+                .Set(s => s.AppointmentId, appointmentId)
+                .UpdateAsync();
+        }
 
 
         //private IEnumerable<Slot> GenerateTimeSlots(DateTime date, int intervalMinutes)

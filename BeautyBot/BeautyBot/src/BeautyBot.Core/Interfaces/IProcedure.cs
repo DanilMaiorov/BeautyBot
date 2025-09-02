@@ -2,9 +2,9 @@
 {
     public interface IProcedure
     {
-        Guid Id { get; }
-        string Name { get; }
-        decimal Price { get; }
-        int Duration { get; }
+        Guid Id { get; set; }
+        string Name { get; set; }
+        decimal Price { get; set; }
+        int Duration { get; set; }
     }
 }

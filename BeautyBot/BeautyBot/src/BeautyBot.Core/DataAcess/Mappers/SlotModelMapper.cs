@@ -1,11 +1,5 @@
 ﻿using BeautyBot.src.BeautyBot.Core.DataAcess.Models;
 using BeautyBot.src.BeautyBot.Domain.Entities;
-using LinqToDB.Mapping;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers
 {

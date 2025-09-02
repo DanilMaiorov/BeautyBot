@@ -21,8 +21,26 @@ namespace BeautyBot.src
                     ? new ClassicManicure(Constants.ClassicManicure, Prices.ClassicManicure, ManicureType.Classic, 60) 
                     : new ClassicPedicure(Constants.ClassicPedicure, Prices.ClassicManicure, PedicureType.Classic, 60),
 
-        //["newProc"] = _ => new newProc(),
+            //["newProc"] = _ => new newProc(),
             };
+
+        //private static readonly Dictionary<string, Dictionary<object, string>> _procedureNames =
+        //    new Dictionary<string, Dictionary<object, string>>(StringComparer.OrdinalIgnoreCase)
+        //    {
+        //        ["маникюр"] = new Dictionary<object, string>
+        //        {
+        //            [ManicureType.Classic] = "классический",
+        //            [ManicureType.GelPolish] = "гель-лак",
+        //            [ManicureType.French] = "френч"
+        //        },
+        //        ["педикюр"] = new Dictionary<object, string>
+        //        {
+        //            [PedicureType.Classic] = "классический",
+        //            [PedicureType.GelPolish] = "гель-лак",
+        //            [PedicureType.French] = "френч"
+        //        }
+        //        //["newProc"] = _ => new newProc(),
+        //    };
 
         public static IProcedure CreateProcedure(string procedureName, string currentStepProcedure)
         {
@@ -34,5 +52,11 @@ namespace BeautyBot.src
 
             throw new ArgumentException($"Unknown procedure: {procedureName}", nameof(procedureName));
         }
+
+
+        //public static string StringFromEnum(ManicureType manicureType) where T : Enum
+        //{
+
+        //}
     }
 }

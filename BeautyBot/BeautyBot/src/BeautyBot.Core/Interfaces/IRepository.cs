@@ -5,7 +5,7 @@
         //    T? GetById(Guid id);
         //    IReadOnlyList<T> GetAll();
         Task Add(T entity, CancellationToken ct);
-        //    void Update(T entity);
+        //Task Update(T entity, CancellationToken ct);
         //    void Delete(Guid id);
     }
 }

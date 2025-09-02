@@ -8,10 +8,10 @@ namespace BeautyBot.src.BeautyBot.Core.BaseClasses
     /// </summary>
     public abstract class ProcedureBase : IProcedure //,IProcedureCost
     {
-        public Guid Id { get; protected set; }
-        public string Name { get; protected set; }
-        public decimal Price { get; protected set; }
-        public int Duration { get; protected set; }
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public int Duration { get; set; }
         protected ProcedureBase()
         {
             Id = Guid.NewGuid();

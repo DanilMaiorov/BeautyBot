@@ -7,6 +7,7 @@ using Telegram.Bot.Types;
 using System.Globalization;
 using Telegram.Bot.Types.ReplyMarkups;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
+using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -20,16 +21,11 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         //private readonly IProcedureCatalogService _procedureCatalogService;
         //private readonly IPriceCalculationService _priceCalculationService;
 
-
         private readonly ICreateAppointmentService _createAppointmentService;
-
-
 
         //логика сценариев
         private readonly IEnumerable<IScenario> _scenarios;
         private readonly IScenarioContextRepository _scenarioContextRepository;
-
-
 
         private readonly CancellationToken _ct;
 
@@ -42,6 +38,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             IAppointmentService appointmentService,
             //IProcedureCatalogService procedureCatalogService,
             //IPriceCalculationService priceCalculationService,
+            PostgreSqlProcedureRepository procedureRepository,
 
             ISlotService slotService,
             ICreateAppointmentService createAppointmentService,

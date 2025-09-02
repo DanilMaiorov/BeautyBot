@@ -58,28 +58,27 @@ namespace BeautyBot
 
             ;
 
-            //IUserRepository userRepository = new InMemoryUserRepository();
             IUserRepository userRepository = new PostgreSqlUserRepository(factory);
-
             ISlotRepository slotRepository = new PostgreSqlSlotRepository(factory);
+            IAppointmentRepository appointmentRepository = new PostgreSqlAppointmentRepository(factory);
 
 
+            IUserService _userService = new UserService(userRepository);
             ISlotService _slotService = new SlotService(slotRepository);
+
+            PostgreSqlProcedureRepository procedureRepository = new PostgreSqlProcedureRepository(factory);
+
+
 
             await _slotService.GenerateYearlySlots(cts.Token);
 
 
-            IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository();
-            //IAppointmentRepository appointmentRepository = new InMemoryAppointmentRepository(); ТУТ НУЖНО БУДЕТ ЗАМЕНИТЬ НА ХРАНЕНИЕ В ЛОКАЛЬНЫХ ФАЙЛАХ
 
             IProcedureDefinitionRepository procedureDefinitionRepository = new InMemoryProcedureDefinitionRepository();
-            //ISlotRepository slotRepository = new InMemorySlotRepository();
 
-            IUserService _userService = new UserService(userRepository);
+
 
             IAppointmentService _appointmentService = new AppointmentService(appointmentRepository, procedureDefinitionRepository, slotRepository);
-
-            //ISlotService _slotService = new SlotService(slotRepository);
 
 
             IProcedureCatalogService _procedureCatalogService = new ProcedureCatalogService(procedureDefinitionRepository);
@@ -104,7 +103,7 @@ namespace BeautyBot
             IScenarioContextRepository _contextRepository = new InMemoryScenarioContextRepository();
             IEnumerable<IScenario> _scenarios = new List<IScenario>
             {
-                new AddAppointmentScenario(_userService, _appointmentService, _slotService),
+                new AddAppointmentScenario(_userService, _appointmentService, _slotService, procedureRepository),
             };
 
 
@@ -114,8 +113,10 @@ namespace BeautyBot
                 _appointmentService,
                 //_procedureCatalogService,
                 //_priceCalculationService,
+                procedureRepository,
 
-                
+
+
                 _slotService,
                 _createAppointmentService,
 

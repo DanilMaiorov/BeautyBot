@@ -99,5 +99,25 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         {
             throw new NotImplementedException();
         }
+
+        public Task<IEnumerable<Slot>> GetSlotsByDate(DateOnly date)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> AnySlotsExist()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdateSlot(Slot slot, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdateSlot(DateOnly date, TimeOnly time, Guid appointmentId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

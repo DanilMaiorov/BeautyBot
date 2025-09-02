@@ -2,7 +2,9 @@
 using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
+using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
 using System.Globalization;
+using System.Linq;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -15,13 +17,17 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
         private readonly IAppointmentService _appointmentService;
         private readonly ISlotService _slotService;
 
+        private readonly PostgreSqlProcedureRepository _procedureRepository;
 
-        public AddAppointmentScenario(IUserService userService, IAppointmentService appointmentService, ISlotService slotService)
+
+        public AddAppointmentScenario(IUserService userService, IAppointmentService appointmentService, ISlotService slotService, PostgreSqlProcedureRepository procedureRepository)
         {
             _userService = userService;
             _appointmentService = appointmentService;
 
             _slotService = slotService;
+
+            _procedureRepository = procedureRepository;
         }
 
         public bool CanHandle(ScenarioType scenario)
@@ -165,8 +171,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             if (dateObj is not DateOnly date)
                 throw new InvalidCastException($"Ожидался DateOnly, получен {dateObj?.GetType().Name ?? "null"}");
 
-            //var slots = await _slotService.GetCurrentDayAvailableTimeSlots(date, ct);
-            var slots = new Dictionary<TimeOnly, Appointment>();
+            var slots = await _slotService.GetSlotsByDate(date, ct);
 
             await botClient.SendMessage(chat, "Выберите время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: ct);
 
@@ -198,8 +203,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                 if (dateObj is not DateOnly date)
                     throw new InvalidCastException($"Ожидался DateOnly, получен {dateObj?.GetType().Name ?? "null"}");
 
-                //var slots = await _slotService.GetCurrentDayAvailableTimeSlots(date, ct);
-                var slots = new Dictionary<TimeOnly, Appointment>();
+                var slots = await _slotService.GetSlotsByDate(date, ct);
 
                 await botClient.SendMessage(chat, "Выберите другое время", replyMarkup: TimeSlotsKeyboard(slots), cancellationToken: ct);
 
@@ -209,6 +213,9 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
                 return ScenarioResult.Transition;
             }
+            ;
+
+            await _procedureRepository.Add((IProcedure)context.Data["TypeProcedure"], ct);
 
             var newAppointment = await _appointmentService.AddAppointment(
                 (BeautyBotUser)context.Data["User"],
@@ -217,8 +224,9 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                 (TimeOnly)context.Data["Time"],
                 ct);
 
+
             //НАДО РЕАЛИЗОВАТЬ
-            //await _slotService.UpdateSlot(newAppointment, ct);
+            await _slotService.UpdateSlotFromAppointment(newAppointment, ct);
 
             await botClient.SendMessage(
                 chat, 
@@ -266,16 +274,16 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
         //    return ScenarioResult.Completed;
         //}
 
-        private ReplyKeyboardMarkup TimeSlotsKeyboard(Dictionary<TimeOnly, Appointment> slots)
+        private ReplyKeyboardMarkup TimeSlotsKeyboard(IEnumerable<Slot> slots)
         {
-            if (slots.Count == 0)
+            if (slots.Count() == 0)
                 Console.WriteLine("На выбранную дату записей нет");
             
             var timeSlotButtons = slots
-                .Select(button => new KeyboardButton(button.Key.ToString()))
+                .Select(button => new KeyboardButton(TimeOnly.FromDateTime(button.StartTime).ToString()))
                 .Select(btn => new[] { btn })
                 .Concat(Keyboards.cancelOrBack.Keyboard)
-                .ToArray();
+                .ToArray(); 
 
             return new ReplyKeyboardMarkup(timeSlotButtons)
             {

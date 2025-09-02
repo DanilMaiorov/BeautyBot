@@ -10,7 +10,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
         public Guid Id { get; set; }
 
         [Column("Type"), NotNull]
-        public Procedure Type { get; set; }
+        public required string Type { get; set; }
 
         [Column("Subtype"), NotNull]
         public required string Subtype { get; set; }
