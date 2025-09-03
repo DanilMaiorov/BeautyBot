@@ -35,7 +35,7 @@ namespace BeautyBot.src
                 { Command.Help, "Помощь по командам" },
                 { Command.Info, "Информация о боте" },
                 //{ Command.AddAppointment, "Записаться на процедуру" },
-                { Command.Add, "Записаться на процедуру" },
+                { Command.Main, "Записаться на процедуру" },
                 { Command.Show, "Показать все записи" },
                 { Command.CancelAppointment, "Отменить запись" },
                 { Command.FindAppointment, "Найти запись" },
@@ -77,7 +77,7 @@ namespace BeautyBot.src
         /// <param name="input">Ввод пользователя</param>
         /// <param name="currentUserAppointmentsList">Список записей юзера</param>
         /// <returns>Кортеж с данными по записи</returns>
-        public static (string, string, string, DateOnly, TimeOnly, Guid) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        public static (string, string, DateOnly) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
         {
             string cutInput = "";
             Guid taskGuid = Guid.Empty;
@@ -86,14 +86,6 @@ namespace BeautyBot.src
             DateOnly date = default;
 
             var inputLower = input.ToLower();
-
-            //// Обработка других кнопок (дни недели, пустые дни, отключенные дни, отображение месяца)
-            //else
-            //{
-            //    // Просто закрываем всплывающее уведомление, так как эти кнопки не требуют других действий
-            //    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
-            //}
-
 
             if (TimeOnly.TryParse(inputLower, out var time))
                 inputLower = "/time";
@@ -104,65 +96,44 @@ namespace BeautyBot.src
                 case "старт":
                     inputLower = "/start";
                     break;
+
                 case "записаться":
                     inputLower = "/create";
                     break;
+
                 case "посмотреть текущие записи":
                     inputLower = "/show";
                     break;
-                case "верно":
-                    inputLower = "/approve";
-                    break;
+
                 case "назад":
                     inputLower = "/back";
                     break;
+
                 case "отмена":
                     inputLower = "/cancel";
                     break;
-
-                //тут кейсы процедур
-                case "маникюр":
-                    inputLower = "/manicure";
-                    break;
-                case "педикюр":
-                    inputLower = "/pedicure";
-                    break;
-
-                //тут кейсы типов процедур
-                case "френч":
-                    inputLower = "/french";
-                    break;
-                case "гель-лак":
-                    inputLower = "/gelPolish";
-                    break;
-                case "классический":
-                    inputLower = "/classic";
-                    break;
-
-                //тут кейсы изменения даты/времени
-                case "выбрать другую дату":
-                    inputLower = "/changedate";
-                    break;
-                case "выбрать другое время":
-                    inputLower = "/changetime";
-                    break;
-
-
 
                 //тут кейсы даты и времени
                 case string s when inputLower.StartsWith("day_selected_"):
                     date = ParseDateFromString(inputLower);
                     inputLower = "/date";
                     break;
+
                 case string s when inputLower.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || inputLower.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase):
                     month = GetFormattedMonth(inputLower);
                     inputLower = "/changemonth";
                     break;
 
+                case "empty_day":
+                case "month_display_no_action":
+                case "day_name_no_action":
+                    inputLower = "/date";
+                    break;
+
                 default:
                     break;
             }
-            return (inputLower, cutInput, month, date, time, taskGuid);
+            return (inputLower, month, date);
         }
 
         public static DateOnly ParseDateFromString(string input)
@@ -253,28 +224,6 @@ namespace BeautyBot.src
                 : default;
         }
 
-
-        //ПЕРЕПИСАТЬ НА SWITCH CASE
-        public static object? GetEnumSubypeEnumOrDefault(string baseType, string subType)
-        {
-
-            var proc = GetEnumValueOrDefault<Procedure>(baseType);
-
-            if (proc is Procedure.Manicure)
-            {
-                return GetEnumValueOrDefault<ManicureType>(subType);
-            }
-            else if (proc is Procedure.Pedicure)
-            {
-                return GetEnumValueOrDefault<PedicureType>(subType);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-
         /// <summary>
         /// Фабричный метод для создания контекста сценария
         /// </summary>
@@ -284,7 +233,6 @@ namespace BeautyBot.src
         {
             return new ScenarioContext(type, userId);
         }
-
 
         /// <summary>
         /// Извлекает ключевые данные из входящего обновления (Update) от Telegram,
@@ -332,7 +280,6 @@ namespace BeautyBot.src
             return (currentChat, currentUserInput, messageId, currentUser);
         }
 
-
         /// <summary>
         /// Пытается получить объект пользователя (BeautyBotUser) из данных контекста сценария.
         /// Если пользователь не найден в контексте или имеет неподходящий тип,
@@ -350,50 +297,6 @@ namespace BeautyBot.src
 
             return await userService.GetUser(id, ct);
         }
-
-
-        private static DateOnly ParseTimeFromString(string input)
-        {
-
-            if (DateOnly.TryParseExact(input, "yyyy-MM-dd",
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly result))
-            {
-                return result;
-            }
-
-            throw new FormatException("Could not parse date from string");
-        }
-
-        // метод валидации задачи
-        public static (string, Guid) Validate(string input, Guid taskGuid, IReadOnlyList<Appointment> appointmentsList)
-        {
-            //сохраню исходный ввод пользака
-            string startInput = input;
-
-            if (input.StartsWith("/del "))
-                input = "/del";
-            else
-                input = "/updateappointment";
-
-
-            if (appointmentsList.Count != 0)
-            {
-                if (!Guid.TryParse(startInput.Substring(input.Length), out taskGuid))
-                {
-                    throw new ArgumentException($"Введён некорректный номер записи.\n");
-                }
-
-                if (appointmentsList.FirstOrDefault(x => x.Id == taskGuid) == null)
-                {
-                    throw new ArgumentException($"Введён некорректный номер записи.\n");
-                }
-                return (input, taskGuid);
-            }
-            return (input, taskGuid);
-        }
-
-
-
 
         public static string GetBaseProcedureName(object procedureType)
         {

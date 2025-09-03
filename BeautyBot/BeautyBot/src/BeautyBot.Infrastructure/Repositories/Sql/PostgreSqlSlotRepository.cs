@@ -2,7 +2,7 @@
 using BeautyBot.src.BeautyBot.Core.DataAcess.Mappers;
 using BeautyBot.src.BeautyBot.Core.DataAcess.Models;
 using BeautyBot.src.BeautyBot.Domain.Entities;
-using BeautyBot.src.BeautyBot.Domain.Services;
+using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using LinqToDB;
 using LinqToDB.Data;
 using System.Reflection;

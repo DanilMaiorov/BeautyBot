@@ -20,8 +20,6 @@ namespace BeautyBot.src
                 ["классический"] = baseProcedureName => baseProcedureName == Constants.Manicure
                     ? new ClassicManicure(Constants.ClassicManicure, Prices.ClassicManicure, ManicureType.Classic, 60) 
                     : new ClassicPedicure(Constants.ClassicPedicure, Prices.ClassicManicure, PedicureType.Classic, 60),
-
-            //["newProc"] = _ => new newProc(),
             };
 
         public static IProcedure CreateProcedure(string procedureName, string currentStepProcedure)
@@ -34,11 +32,5 @@ namespace BeautyBot.src
 
             throw new ArgumentException($"Unknown procedure: {procedureName}", nameof(procedureName));
         }
-
-
-        //public static string StringFromEnum(ManicureType manicureType) where T : Enum
-        //{
-
-        //}
     }
 }

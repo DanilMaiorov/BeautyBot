@@ -10,15 +10,9 @@ namespace BeautyBot.src.BeautyBot.Application.Services
     {
         private readonly IAppointmentRepository _appointmentRepository;
 
-        private readonly ISlotRepository _slotRepository;
-
-        private readonly IProcedureDefinitionRepository _procedureDefinitionRepository; // Для получения деталей процедуры
-
-        public AppointmentService(IAppointmentRepository appointmentRepository, IProcedureDefinitionRepository procedureDefinitionRepository, ISlotRepository slotRepository)
+        public AppointmentService(IAppointmentRepository appointmentRepository)
         {
             _appointmentRepository = appointmentRepository;
-            _procedureDefinitionRepository = procedureDefinitionRepository;
-            _slotRepository = slotRepository;   
         }
 
         // реализация метода интерфейса Add
@@ -30,18 +24,6 @@ namespace BeautyBot.src.BeautyBot.Application.Services
 
             return newAppointment;
         }
-
-
-
-
-
-
-
-
-
-
-
-
 
         public async Task<IReadOnlyList<Appointment>> GetUserAppointmentsByUserId(Guid userId, CancellationToken ct)
         {
@@ -67,43 +49,5 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         {
             await _appointmentRepository.CancelAppointment(appointmentId, ct);
         }
-
-
-
-
-
-
-        //public IReadOnlyList<Appointment> GetUserAppointments(Guid userId) => _appointmentRepository.GetAllByUserId(userId);
-        //public IReadOnlyList<Appointment> GetUserActiveAppointments(Guid userId) => _appointmentRepository.GetActiveByUserId(userId);
-
-        //public Appointment BookAppointment(Guid userId, Guid procedureId, DateTime appointmentTime)
-        //{
-        //    var procedure = _procedureDefinitionRepository.GetById(procedureId);
-        //    if (procedure == null) throw new ArgumentException("Procedure not found.");
-
-        //    var appointment = new Appointment(userId, procedure, appointmentTime);
-        //    _appointmentRepository.Add(appointment);
-        //    return appointment;
-        //}
-
-        //public void CancelAppointment(Guid appointmentId)
-        //{
-        //    var appointment = _appointmentRepository.GetById(appointmentId);
-        //    if (appointment != null)
-        //    {
-        //        appointment.Status = AppointmentStatus.Cancelled;
-        //        _appointmentRepository.Update(appointment);
-        //    }
-        //}
-
-        //public void CompleteAppointment(Guid appointmentId)
-        //{
-        //    var appointment = _appointmentRepository.GetById(appointmentId);
-        //    if (appointment != null)
-        //    {
-        //        appointment.Status = AppointmentStatus.Completed;
-        //        _appointmentRepository.Update(appointment);
-        //    }
-        //}
     }
 }

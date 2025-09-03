@@ -4,7 +4,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 {
     public class InMemoryScenarioContextRepository : IScenarioContextRepository
     {
-        //словарь в качестве хранилища
         public ConcurrentDictionary<long, ScenarioContext> _scenarioContext = [];
 
         public Task<ScenarioContext?> GetContext(long userId, CancellationToken ct)
@@ -17,7 +16,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                     : null
             );
         }
-
         public Task ResetContext(long userId, CancellationToken ct)
         {
             if (_scenarioContext.TryRemove(userId, out var removedContext))

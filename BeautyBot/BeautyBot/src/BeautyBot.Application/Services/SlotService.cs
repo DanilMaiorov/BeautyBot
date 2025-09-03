@@ -1,4 +1,5 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
+using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using BeautyBot.src.BeautyBot.Domain.Services;
 
 namespace BeautyBot.src.BeautyBot.Application.Services

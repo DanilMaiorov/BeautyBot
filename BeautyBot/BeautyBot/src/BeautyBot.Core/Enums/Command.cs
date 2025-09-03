@@ -10,7 +10,7 @@
         Info,
         Show,
 
-        Add,
+        Main,
         //AddAppointment,
         Del,
         //AddAppointment,
@@ -36,9 +36,7 @@
         Date,
         Time,
         Changemonth,
-
         ChangeDate,
-        ChangeTime,
 
         Approve
     }
