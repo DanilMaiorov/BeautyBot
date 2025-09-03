@@ -41,7 +41,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
         public async Task AddRange(IEnumerable<Slot> entities, CancellationToken ct)
         {
-            var dbContext = _factory.CreateDataContext();
+            using var dbContext = _factory.CreateDataContext();
 
             var slotsModels = entities.Select(SlotModelMapper.MapToModel);
 
@@ -55,7 +55,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
         public async Task<IEnumerable<Slot>> GetSlotsByDate(DateOnly date)
         {
-            var dbContext = _factory.CreateDataContext();
+            using var dbContext = _factory.CreateDataContext();
 
             var slots = await dbContext.Slots
                 .Where(s => s.Date.Year == date.Year && s.Date.Month == date.Month && s.Date.Day == date.Day)
@@ -66,7 +66,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
         public async Task<bool> AnySlotsExist()
         {
-            var dbContext = _factory.CreateDataContext();
+            using var dbContext = _factory.CreateDataContext();
 
             var count = await dbContext.GetTable<SlotModel>().CountAsync();
 
@@ -77,14 +77,27 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
         public async Task UpdateSlot(DateOnly date, TimeOnly time, Guid appointmentId, CancellationToken ct)
         {
-            var dbContext = _factory.CreateDataContext();
+            using var dbContext = _factory.CreateDataContext();
 
             var targetDateTime = date.ToDateTime(time);
 
             await dbContext.Slots
-                .Where(s => s.Date.Year == date.Year && s.Date.Month == date.Month && s.Date.Day == date.Day && s.StartTime.Hour == time.Hour && s.StartTime.Minute == time.Minute)
+                .Where(s => s.StartTime == targetDateTime)
                 .Set(s => s.AppointmentId, appointmentId)
                 .UpdateAsync();
+        }
+
+        public async Task<List<DateOnly>> GetUnavailableDaySlots(CancellationToken ct)
+        {
+            using var dbContext = _factory.CreateDataContext();
+
+            var unavailableDays = await dbContext.Slots
+                .GroupBy(s => s.StartTime.Date)
+                .Where(g => g.Count() == g.Count(s => s.AppointmentId != null))
+                .Select(g => DateOnly.FromDateTime(g.Key))
+                .ToListAsync(ct);
+
+            return unavailableDays;
         }
 
 

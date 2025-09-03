@@ -16,7 +16,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         IEnumerable<Slot> GenerateDailySlots(DateTime date, int intervalMinutes);
         Task GenerateYearlySlots(CancellationToken ct);
         Task<IEnumerable<Slot>> GetSlotsByDate(DateOnly date, CancellationToken ct);
-        Task<IEnumerable<Slot>> GetUnavailableSlotsByDate(DateOnly date, CancellationToken ct);
+        Task<List<DateOnly>> GetUnavailableSlotsByDate(CancellationToken ct);
         Task UpdateSlotFromAppointment(Appointment appointment, CancellationToken ct);
     }
 }

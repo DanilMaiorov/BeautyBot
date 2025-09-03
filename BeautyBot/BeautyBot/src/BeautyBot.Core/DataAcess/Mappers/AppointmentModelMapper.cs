@@ -25,8 +25,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers
         }
         public static AppointmentModel MapToModel(Appointment entity)
         {
-            var baseType = Helper.GetBaseProcedureName(entity.Procedure);
-            var appointmentModel = ProcedureModelMapper.MapToModel(entity.Procedure, baseType);
+            var appointmentModel = ProcedureModelMapper.MapToModel(entity.Procedure);
 
             return new AppointmentModel
             {

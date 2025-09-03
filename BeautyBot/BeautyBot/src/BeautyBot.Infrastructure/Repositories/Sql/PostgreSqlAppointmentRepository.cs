@@ -26,8 +26,6 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         {
             using var dbContext = _factory.CreateDataContext();
 
-            var baseType = Helper.GetBaseProcedureName(appointment.Procedure);
-
             await dbContext.InsertAsync(AppointmentModelMapper.MapToModel(appointment));
         }
 

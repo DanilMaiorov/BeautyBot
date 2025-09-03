@@ -20,9 +20,7 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
         {
             using var dbContext = _factory.CreateDataContext();
 
-            var baseType = Helper.GetBaseProcedureName(procedure);
-
-            await dbContext.InsertAsync(ProcedureModelMapper.MapToModel(procedure, baseType));
+            await dbContext.InsertAsync(ProcedureModelMapper.MapToModel(procedure));
         }
 
         //public async Task<IEnumerable<IProcedure>> GetAllByType(string type, CancellationToken ct)

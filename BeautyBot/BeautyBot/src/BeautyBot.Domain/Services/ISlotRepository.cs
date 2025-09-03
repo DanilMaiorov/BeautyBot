@@ -11,7 +11,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task<IEnumerable<Slot>> GetSlotsByDate(DateOnly date);
         Task<bool> AnySlotsExist();
         Task UpdateSlot(DateOnly date, TimeOnly time, Guid appointmentId, CancellationToken ct);
-
+        Task<List<DateOnly>> GetUnavailableDaySlots(CancellationToken ct);
 
 
         //Task<Dictionary<TimeOnly, Appointment>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct);

@@ -1,4 +1,5 @@
 ﻿using BeautyBot.src.BeautyBot.Core.DataAcess.Models;
+using BeautyBot.src.BeautyBot.Core.Enums;
 using BeautyBot.src.BeautyBot.Core.Interfaces;
 
 namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers
@@ -11,12 +12,12 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers
             procedureEntity.Id = model.Id;
             return procedureEntity;
         }
-        public static ProcedureModel MapToModel(IProcedure entity, string baseType)
+        public static ProcedureModel MapToModel(IProcedure entity)
         {
             return new ProcedureModel
             {
                 Id = entity.Id,
-                Type = baseType,
+                Type = Helper.GetBaseProcedureName(entity),
                 Subtype = entity.Name,
                 Price = entity.Price,
                 Duration = entity.Duration,

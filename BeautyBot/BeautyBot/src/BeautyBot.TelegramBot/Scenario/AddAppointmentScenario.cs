@@ -1,13 +1,12 @@
-﻿using BeautyBot.src.BeautyBot.Core.Enums;
-using BeautyBot.src.BeautyBot.Core.Interfaces;
+﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
 using System.Globalization;
-using System.Linq;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Requests;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 {
@@ -41,7 +40,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             if (update.Message == null && update.CallbackQuery == null)
                 return ScenarioResult.Completed;
 
-            (Chat? currentChat, string? currentUserInput, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, context, _userService, ct);
+            (Chat? currentChat, string? currentUserInput, int currentMessageId, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, context, _userService, ct);
 
             switch (context.CurrentStep)
             {
@@ -52,13 +51,13 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                     return await HandleBaseProcedureStep(botClient, context, currentChat, currentUserInput, ct);
 
                 case "TypeProcedure":
-                    return await HandleTypeProcedureStep(botClient, context, currentChat, currentUserInput, ct);
+                    return await HandleTypeProcedureStep(botClient, context, currentChat, currentUserInput, currentMessageId, ct);
 
-                case "ChooseDateProcedure":
-                    return await HandleChooseDateStep(botClient, context, currentChat, currentUserInput, ct);
+                case "DateProcedure":
+                    return await HandleChooseDateStep(botClient, context, currentChat, currentUserInput, currentMessageId, ct);
 
                 case "ApproveDateProcedure":
-                    return await HandleApproveDateStep(botClient, context, currentChat, currentUserInput, ct);
+                    return await HandleApproveDateStep(botClient, context, currentChat, currentUserInput, currentMessageId, ct);
 
                 case "ChooseTimeProcedure":
                     return await HandleChooseTimeStep(botClient, context, currentChat, currentUserInput, ct);
@@ -82,12 +81,29 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             return ScenarioResult.Transition;
         }
+
+
+
+
+
         private async Task<ScenarioResult> HandleBaseProcedureStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
         {
+            if (userInput == Constants.Back)
+            {
+                context.DataHistory.Pop();
+
+                context.CurrentStep = null;
+
+                return await HandleInitialStep(botClient, context, (BeautyBotUser)context.Data["User"], chat, ct);
+            }
+
+
             if (userInput != Constants.Manicure && userInput != Constants.Pedicure)
                 throw new Exception("Что-то пошло не так");
 
             context.Data["BaseProcedure"] = userInput;
+
+            context.DataHistory.Push(userInput);
 
             switch (context.Data["BaseProcedure"])
             {
@@ -105,44 +121,63 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             return ScenarioResult.Transition;
         }
-        private async Task<ScenarioResult> HandleTypeProcedureStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
+        private async Task<ScenarioResult> HandleTypeProcedureStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, int messageId, CancellationToken ct)
         {
             context.Data.TryGetValue("BaseProcedure", out var procedureType);
 
             if (procedureType == null)
                 throw new Exception("Что-то пошло не так");
-            
+
+            if (userInput == Constants.Back)
+            {
+                context.DataHistory.Pop();
+
+                context.CurrentStep = "BaseProcedure";
+
+                await botClient.DeleteMessage(chatId: chat, messageId: messageId - 1, cancellationToken: ct );
+
+                return await HandleBaseProcedureStep(botClient, context, chat, context.DataHistory.Peek(), ct);
+            }
+
+            context.DataHistory.Push(userInput);
+
             context.Data["TypeProcedure"] = ProcedureFactory.CreateProcedure(userInput, (string)procedureType);
 
             var calendarMarkup = DaySlotsKeyboard(
                 DateTime.Today,
                 DateTime.Today,
                 DateTime.Today.AddDays(60),
-                //await _slotService.GetUnavailableDaySlots(ct)
-                new List<DateOnly>()
+                await _slotService.GetUnavailableSlotsByDate(ct)
                 );
 
             await botClient.SendMessage(chat, "Выберите дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: ct);
 
             await botClient.SendMessage(chat, "✖ - означает, что на выбранную дату нет свободных слотов", replyMarkup: calendarMarkup, cancellationToken: ct);
 
-            context.CurrentStep = "ChooseDateProcedure";
+            context.CurrentStep = "DateProcedure";
 
             return ScenarioResult.Transition;
         }
-        private async Task<ScenarioResult> HandleChooseDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
+        private async Task<ScenarioResult> HandleChooseDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, int messageId, CancellationToken ct)
         {
+            if (userInput == Constants.Back)
+            { 
+                context.CurrentStep = "TypeProcedure";
+
+                return await HandleTypeProcedureStep(botClient, context, chat, context.DataHistory.Pop(), messageId, ct);
+            }
+
             var date = Helper.ParseDateFromString(userInput);
 
             await botClient.SendMessage(chat, $"Выбранная дата - {date}\n\nВерно?", replyMarkup: Keyboards.approveDate, cancellationToken: ct);
 
-            context.Data["Date"] = date;
+            context.Data["DateProcedure"] = date;
 
             context.CurrentStep = "ApproveDateProcedure";
 
             return ScenarioResult.Transition;
         }
-        private async Task<ScenarioResult> HandleApproveDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
+        private async Task<ScenarioResult> HandleApproveDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, int messageId, CancellationToken ct)
         {
             if (userInput != Constants.Accept)
             {
@@ -150,22 +185,24 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                     DateTime.Today,
                     DateTime.Today,
                     DateTime.Today.AddDays(60),
-                    //await _slotService.GetUnavailableDaySlots(ct)
-                    new List<DateOnly>()
+                    await _slotService.GetUnavailableSlotsByDate(ct)
                     );
+
+                await botClient.DeleteMessage(chatId: chat, messageId: messageId - 2, cancellationToken: ct);
+                await botClient.DeleteMessage(chatId: chat, messageId: messageId - 1, cancellationToken: ct);
 
                 await botClient.SendMessage(chat, "Выберите другую дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: ct);
 
                 await botClient.SendMessage(chat, "✖ - означает, что на выбранную дату нет свободных слотов", replyMarkup: calendarMarkup, cancellationToken: ct);
 
-                context.CurrentStep = "ChooseDateProcedure";
+                context.CurrentStep = "DateProcedure";
 
-                context.Data["Date"] = null;
+                context.Data["DateProcedure"] = null;
 
                 return ScenarioResult.Transition;
             }
 
-            if (!context.Data.TryGetValue("Date", out var dateObj))
+            if (!context.Data.TryGetValue("DateProcedure", out var dateObj))
                 throw new KeyNotFoundException("Не найдена контекст даты");
 
             if (dateObj is not DateOnly date)
@@ -197,7 +234,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
         {
             if (userInput != Constants.Accept)
             {
-                if (!context.Data.TryGetValue("Date", out var dateObj))
+                if (!context.Data.TryGetValue("DateProcedure", out var dateObj))
                     throw new KeyNotFoundException("Не найдена контекст даты");
 
                 if (dateObj is not DateOnly date)
@@ -213,66 +250,26 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
                 return ScenarioResult.Transition;
             }
-            ;
 
             await _procedureRepository.Add((IProcedure)context.Data["TypeProcedure"], ct);
 
             var newAppointment = await _appointmentService.AddAppointment(
                 (BeautyBotUser)context.Data["User"],
                 (IProcedure)context.Data["TypeProcedure"],
-                (DateOnly)context.Data["Date"],
+                (DateOnly)context.Data["DateProcedure"],
                 (TimeOnly)context.Data["Time"],
                 ct);
 
-
-            //НАДО РЕАЛИЗОВАТЬ
             await _slotService.UpdateSlotFromAppointment(newAppointment, ct);
 
             await botClient.SendMessage(
                 chat, 
-                $"Вы успешно записаны🤗\n\nЖдём Вас {context.Data["Date"]} в {context.Data["Time"]}\n\nПо адресу г. Екатеринбург ул. Ленина 1, офис 101\n\nПрекрасного дня ☀️", 
+                $"Вы успешно записаны🤗\n\nЖдём Вас {context.Data["DateProcedure"]} в {context.Data["Time"]}\n\nПо адресу г. Екатеринбург ул. Ленина 1, офис 101\n\nПрекрасного дня ☀️", 
                 replyMarkup: Keyboards.firstStep, 
                 cancellationToken: ct);
 
             return ScenarioResult.Completed;
         }
-
-
-        private async Task<IProcedure> GetTypeProcedure(string userInput, CancellationToken ct)
-        {
-            if (userInput == Constants.Manicure)
-            {
-                return await Task.FromResult(new Manicure());
-            }
-            else if (userInput == Constants.Pedicure)
-            {
-                return await Task.FromResult(new Pedicure());
-            }
-            else
-            {
-                return await Task.FromResult(new Manicure());
-            }
-        }
-
-        //private async Task<ScenarioResult> HandleChooseListStep(ITelegramBotClient botClient, ScenarioContext context, User user, Chat chat, CancellationToken ct)
-        //{
-        //    //var toDoList = context.Data.TryGetValue("List", out var toDoListObj) ? (ToDoList)toDoListObj : null;
-        //    var toDoItemName = (string)context.Data["Name"];
-
-        //    var toDoItem = await _appointmentService.Add(
-        //        (User)context.Data["User"],
-        //        toDoItemName,
-        //        (DateTime)context.Data["Deadline"],
-        //        //toDoList,
-        //        ct);
-
-        //    //if (toDoList != null)
-        //    //    await botClient.SendMessage(chat, $"Задача \"{toDoItemName}\" добавлена в список \"{toDoList.Name}\".\n", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
-        //    //else
-        //    //    await botClient.SendMessage(chat, $"Задача \"{toDoItemName}\" добавлена в общий список.\n", replyMarkup: Helper.keyboardReg, cancellationToken: ct);
-
-        //    return ScenarioResult.Completed;
-        //}
 
         private ReplyKeyboardMarkup TimeSlotsKeyboard(IEnumerable<Slot> slots)
         {
@@ -301,7 +298,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             string PrevMonthCallback = "prev_month_";
             string NextMonthCallback = "next_month_";
             string DaySelectedCallback = "day_selected_";
-
 
             var keyboardButtons = new List<List<InlineKeyboardButton>>();
 

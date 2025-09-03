@@ -303,19 +303,22 @@ namespace BeautyBot.src
         /// </list>
         /// Возвращает кортеж из всех null-значений, если обновление не содержит сообщения или колбэка.
         /// </returns>
-        public static async Task<(Chat?, string?, BeautyBotUser?)> HandleMessageAsyncGetData(Update update, ScenarioContext context, IUserService userService, CancellationToken ct)
+        public static async Task<(Chat?, string?, int, BeautyBotUser?)> HandleMessageAsyncGetData(Update update, ScenarioContext context, IUserService userService, CancellationToken ct)
         {
             Message? message;
             string? currentUserInput;
+            int messageId;
 
             if (update.Message != null)
             {
                 message = update.Message;
+                messageId = update.Message.Id;
                 currentUserInput = message.Text?.Trim();
             }
             else if (update.CallbackQuery != null)
             {
                 message = update.CallbackQuery.Message;
+                messageId = update.CallbackQuery.Message.Id;
                 currentUserInput = update.CallbackQuery.Data.Trim();
             }
             else
@@ -326,7 +329,7 @@ namespace BeautyBot.src
             var currentChat = message.Chat;
             var currentUser = await GetUserInScenario(context, currentChat.Id, currentChat.Username, userService, ct);
 
-            return (currentChat, currentUserInput, currentUser);
+            return (currentChat, currentUserInput, messageId, currentUser);
         }
 
 

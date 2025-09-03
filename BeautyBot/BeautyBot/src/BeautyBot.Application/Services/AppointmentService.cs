@@ -28,8 +28,6 @@ namespace BeautyBot.src.BeautyBot.Application.Services
 
             await _appointmentRepository.Add(newAppointment, ct);
 
-            //await _slotRepository.Add(newAppointment, ct);
-
             return newAppointment;
         }
 

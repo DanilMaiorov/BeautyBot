@@ -24,24 +24,6 @@ namespace BeautyBot.src
             //["newProc"] = _ => new newProc(),
             };
 
-        //private static readonly Dictionary<string, Dictionary<object, string>> _procedureNames =
-        //    new Dictionary<string, Dictionary<object, string>>(StringComparer.OrdinalIgnoreCase)
-        //    {
-        //        ["маникюр"] = new Dictionary<object, string>
-        //        {
-        //            [ManicureType.Classic] = "классический",
-        //            [ManicureType.GelPolish] = "гель-лак",
-        //            [ManicureType.French] = "френч"
-        //        },
-        //        ["педикюр"] = new Dictionary<object, string>
-        //        {
-        //            [PedicureType.Classic] = "классический",
-        //            [PedicureType.GelPolish] = "гель-лак",
-        //            [PedicureType.French] = "френч"
-        //        }
-        //        //["newProc"] = _ => new newProc(),
-        //    };
-
         public static IProcedure CreateProcedure(string procedureName, string currentStepProcedure)
         {
             if (string.IsNullOrWhiteSpace(procedureName))

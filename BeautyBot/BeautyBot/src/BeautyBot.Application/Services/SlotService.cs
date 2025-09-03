@@ -57,11 +57,9 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             return slots.Where(slot => slot.AppointmentId == null);
         }
 
-        public async Task<IEnumerable<Slot>> GetUnavailableSlotsByDate(DateOnly date, CancellationToken ct)
+        public async Task<List<DateOnly>> GetUnavailableSlotsByDate(CancellationToken ct)
         {
-            var slots = await _slotRepository.GetSlotsByDate(date);
-
-            return slots.Where(slot => slot.AppointmentId != null);
+            return await _slotRepository.GetUnavailableDaySlots(ct);
         }
 
         public async Task UpdateSlotFromAppointment(Appointment appointment, CancellationToken ct)
