@@ -73,7 +73,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         {
             (Chat? currentChat, string? currentUserInput, int currentMessageId, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, _userService, ct);
 
-            string eventMessage = "";
+            string eventMessage = currentUserInput;
 
             try
             {
@@ -86,9 +86,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     await botClient.SendMessage(currentChat, "Для запуска бота необходимо нажать на кнопку ниже или ввести /start", replyMarkup: Keyboards.start, cancellationToken: _ct);
                     return;
                 }
-
-                //присваиваю начальное значение введёного сообщения
-                eventMessage = currentUserInput;
 
                 //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateStarted?.Invoke(eventMessage);
@@ -216,7 +213,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         {
             (Chat? currentChat, string? currentUserInput, int currentMessageId, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, _userService, ct);
 
-            string eventMessage = "";
+            string eventMessage = currentUserInput;
 
             try
             {
@@ -230,27 +227,17 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     return;
                 }
 
-                eventMessage = currentUserInput;
-
                 OnHandleUpdateStarted?.Invoke(eventMessage);
-
-                (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(currentUserInput, currentUserAppointmentsList);
-
-                currentUserInput = inputCommand.Replace("/", string.Empty);
-
-                //парсинг команды
-                Command command = Helper.GetEnumValueOrDefault<Command>(currentUserInput);
 
                 var scenarioContext = await _scenarioContextRepository.GetContext(currentUser.TelegramUserId, ct);
 
-                var isHandled = await TryHandleCallbackCommandAsync(botClient, currentChat, command, scenarioContext, currentMessageId, ct, chooseMonth, chooseDate);
+                var isHandled = await TryHandleCallbackCommandAsync(botClient, currentChat, currentUserInput, scenarioContext, currentMessageId, ct);
 
                 if (!isHandled)
                 {
                     OnHandleUpdateCompleted?.Invoke(eventMessage);
                     return;
                 }
-
 
                 if (scenarioContext != null)
                 {
@@ -264,93 +251,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 throw;
             }
         }
-
-
-        private async Task<bool> TryHandleCallbackCommandAsync(ITelegramBotClient botClient, Chat chat, Command command, ScenarioContext context, int messageId, CancellationToken ct, string chooseMonth = null, DateOnly chooseDate = default)
-        {
-            //обработка основных команд
-            switch (command)
-            {
-                case Command.CancelAppointment:
-                    Console.WriteLine("CancelAppointment");
-                    break;
-
-                case Command.EditAppointment:
-                    //await ShowHelp(currentUser);
-                    Console.WriteLine("EditAppointmentEditAppointment");
-                    break;
-
-                case Command.Date:
-                    if (context == null || context.CurrentStep != "DateProcedure")
-                        return false;
-                    return true;
-
-                case Command.Changemonth:
-                    if (DateTime.TryParseExact(chooseMonth, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth) && context != null)
-                    {
-                        var newCalendarMarkup = DaySlotsKeyboard(
-                            newDisplayMonth,
-                            DateTime.Today,
-                            DateTime.Today.AddDays(60),
-                            await _slotService.GetUnavailableSlotsByDate(ct)
-                            );
-
-                        await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: newCalendarMarkup, cancellationToken: _ct);
-                        return true;
-                    }
-                    return false;
-
-                case Command.Exit:
-                    //await ShowHelp(currentUser);
-                    Console.WriteLine("ExitExit");
-                    break;
-
-                default:
-                    await botClient.SendMessage(
-                        chat,
-                        "Введена некорректная команда. Пожалуйста, введите команду заново.\n",
-                        replyMarkup: chat != null ? Keyboards.firstStep : Keyboards.start,
-                        cancellationToken: _ct);
-
-                    return false;
-            }
-
-            return true;
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         private static InlineKeyboardMarkup DaySlotsKeyboard(
             DateTime displayMonth,
@@ -578,6 +478,65 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         #region МЕТОДЫ ОБРАБОТЧИКИ КОМАНД
 
 
+
+        private async Task<bool> TryHandleCallbackCommandAsync(ITelegramBotClient botClient, Chat chat, string input, ScenarioContext context, int messageId, CancellationToken ct)
+        {
+
+            (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(input);
+
+            input = inputCommand.Replace("/", string.Empty);
+
+            //парсинг команды
+            Command command = Helper.GetEnumValueOrDefault<Command>(input);
+
+            //обработка основных команд
+            switch (command)
+            {
+                case Command.CancelAppointment:
+                    Console.WriteLine("CancelAppointment");
+                    break;
+
+                case Command.EditAppointment:
+                    //await ShowHelp(currentUser);
+                    Console.WriteLine("EditAppointmentEditAppointment");
+                    break;
+
+                case Command.Date:
+                    if (context == null || context.CurrentStep != "DateProcedure")
+                        return false;
+                    return true;
+
+                case Command.Changemonth:
+                    if (DateTime.TryParseExact(chooseMonth, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth) && context != null)
+                    {
+                        var newCalendarMarkup = DaySlotsKeyboard(
+                            newDisplayMonth,
+                            DateTime.Today,
+                            DateTime.Today.AddDays(60),
+                            await _slotService.GetUnavailableSlotsByDate(ct)
+                            );
+
+                        await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: newCalendarMarkup, cancellationToken: _ct);
+                    }
+                    return false;
+
+                case Command.Exit:
+                    //await ShowHelp(currentUser);
+                    Console.WriteLine("ExitExit");
+                    break;
+
+                default:
+                    await botClient.SendMessage(
+                        chat,
+                        "Введена некорректная команда. Пожалуйста, введите команду заново.\n",
+                        replyMarkup: chat != null ? Keyboards.firstStep : Keyboards.start,
+                        cancellationToken: _ct);
+
+                    return false;
+            }
+
+            return true;
+        }
 
         #endregion
 
