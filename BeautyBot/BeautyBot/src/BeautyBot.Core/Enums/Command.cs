@@ -10,10 +10,12 @@
         Info,
         Show,
 
-        Main,
         //AddAppointment,
+
         Del,
+
         //AddAppointment,
+
         CancelAppointment,
         FindAppointment,
         EditAppointment,
@@ -29,14 +31,19 @@
         Manicure,
         Pedicure,
         Classic,
+        GelPolish,
+        French,
 
 
 
         Back,
         Date,
         Time,
+
+
         Changemonth,
         ChangeDate,
+        ChangeTime,
 
         Approve
     }

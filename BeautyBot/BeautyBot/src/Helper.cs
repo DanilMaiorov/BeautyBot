@@ -32,7 +32,7 @@ namespace BeautyBot.src
                 { Command.Help, "Помощь по командам" },
                 { Command.Info, "Информация о боте" },
                 //{ Command.AddAppointment, "Записаться на процедуру" },
-                { Command.Main, "Записаться на процедуру" },
+                //{ Command.Main, "Записаться на процедуру" },
                 { Command.Show, "Показать все записи" },
                 { Command.CancelAppointment, "Отменить запись" },
                 { Command.FindAppointment, "Найти запись" },
@@ -85,7 +85,7 @@ namespace BeautyBot.src
             var inputLower = input.ToLower();
 
             if (TimeOnly.TryParse(inputLower, out var time))
-                inputLower = "/time";
+                inputLower = "время";
 
             switch (inputLower)
             {
@@ -110,7 +110,46 @@ namespace BeautyBot.src
                     inputLower = "/cancel";
                     break;
 
-                //тут кейсы даты и времени
+                //процедуры
+                case "маникюр":
+                    inputLower = "/manicure";
+                    break;
+                case "педикюр":
+                    inputLower = "/pedicure";
+                    break;
+                case "классический":
+                    inputLower = "/classic";
+                    break;
+                case "гель-лак":
+                    inputLower = "/gelpolish";
+                    break;
+                case "френч":
+                    inputLower = "/french";
+                    break;
+
+
+                case "верно":
+                    inputLower = "/approve";
+                    break;
+
+
+                case "выбрать другое время":
+                    inputLower = "/changetime";
+                    break;
+                case "выбрать другую дату":
+                    inputLower = "/changedate";
+                    break;
+
+
+                case "время":
+                    inputLower = "/time";
+                    break;
+
+
+
+
+
+
                 case string s when inputLower.StartsWith("day_selected_"):
                     date = ParseDateFromString(inputLower);
                     inputLower = "/date";
@@ -131,6 +170,12 @@ namespace BeautyBot.src
                     break;
             }
             return (inputLower, month, date);
+        }
+
+
+        public static bool ParseTimeFromString(string timeString)
+        {
+            return TimeOnly.TryParse(timeString, out _);
         }
 
         public static DateOnly ParseDateFromString(string input)
@@ -258,8 +303,6 @@ namespace BeautyBot.src
                     update.Message.Id,
                     await userService.GetUser(update.Message.From.Id, ct)
                     );
-
-
             }
             else if (update.CallbackQuery != null)
             {

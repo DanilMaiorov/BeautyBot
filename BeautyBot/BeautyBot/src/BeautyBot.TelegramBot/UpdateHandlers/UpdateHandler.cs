@@ -360,9 +360,48 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         {
             var scenario = GetScenario(context.CurrentScenario);
 
-            var scenarioResult = await scenario.HandleMessageAsync(botClient, context, update, ct);
+            var scenarioResponse = await scenario.HandleMessageAsync(botClient, context, update, ct);
 
-            if (scenarioResult == ScenarioResult.Completed)
+            context.LastResponse = scenarioResponse;
+
+
+            //await botClient.SendMessage(
+            //    context.LastResponse.Chat,
+            //    context.LastResponse.Message, 
+            //    replyMarkup: context.LastResponse.Keyboard, 
+            //    cancellationToken: ct);
+
+            //завести интерфейс тут
+            // Обработка нескольких сообщений
+            if (scenarioResponse.Messages != null && scenarioResponse.Messages.Count > 0)
+            {
+                for (int i = 0; i < scenarioResponse.Messages.Count; i++)
+                {
+                    var keyboard = scenarioResponse.Keyboards != null && i < scenarioResponse.Keyboards.Count
+                        ? scenarioResponse.Keyboards[i]
+                        : null;
+
+                    await botClient.SendMessage(
+                        scenarioResponse.Chat,
+                        scenarioResponse.Messages[i],
+                        replyMarkup: keyboard,
+                        cancellationToken: ct);
+                }
+            }
+            // Обработка одиночного сообщения (для обратной совместимости)
+            else if (!string.IsNullOrEmpty(scenarioResponse.Message))
+            {
+                await botClient.SendMessage(
+                    scenarioResponse.Chat,
+                    scenarioResponse.Message,
+                    replyMarkup: scenarioResponse.Keyboard,
+                    cancellationToken: ct);
+            }
+
+
+
+
+            if (context.LastResponse.Result == ScenarioResult.Completed)
                 await _scenarioContextRepository.ResetContext(telegramUserId, ct);
             else
                 await _scenarioContextRepository.SetContext(telegramUserId, context, ct);
@@ -415,6 +454,19 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     //await _appointmentService.UpdateAppointment(taskGuid, AppointmentState.Completed, _ct);
                     break;
 
+                case Command.Manicure:
+                case Command.Pedicure:
+                case Command.Classic:
+                case Command.GelPolish:
+                case Command.French:
+                case Command.ChangeDate:
+                case Command.ChangeTime:
+                case Command.Time:
+                case Command.Approve:
+                    return (true, context);
+
+
+
                 case Command.FindAppointment:
                     //await ShowHelp(currentUser);
                     Console.WriteLine("FindAppointmentFindAppointment");
@@ -460,6 +512,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     break;
 
                 default:
+
+                    
                     await botClient.SendMessage(
                         chat,
                         "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n",
