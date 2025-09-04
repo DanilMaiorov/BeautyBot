@@ -9,6 +9,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
 using System.Collections.Generic;
+using System;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -70,56 +71,46 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
         private async Task OnMessage(ITelegramBotClient botClient, Update update, Message message, CancellationToken ct)
         {
-            Chat currentChat = update.Message.Chat;
-            long telegramCurrentUserId = update.Message.From.Id;
-            string telegramCurrentUserName = update.Message.From.Username;
-            string telegramUserFirstName = update.Message.From.FirstName;
-            string telegramUserLastName = update.Message.From.LastName;
-            string input = update.Message.Text;
+            (Chat? currentChat, string? currentUserInput, int currentMessageId, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, _userService, ct);
 
             string eventMessage = "";
 
             try
             {
-                var currentUser = await _userService.GetUser(telegramCurrentUserId, _ct);
-
                 var currentUserTaskList = currentUser != null
                     ? await _appointmentService.GetUserAppointmentsByUserId(currentUser.UserId, _ct)
                     : null;
 
-                if (currentUser == null)
+                if (currentUser == null && (currentUserInput != "/start" && currentUserInput != "Старт"))
                 {
-                    if (input != "/start" && input != "Старт")
-                    {
-                        await botClient.SendMessage(currentChat, "Для запуска бота необходимо нажать на кнопку ниже или ввести /start", replyMarkup: Keyboards.start, cancellationToken: _ct);
-                        return;
-                    }
+                    await botClient.SendMessage(currentChat, "Для запуска бота необходимо нажать на кнопку ниже или ввести /start", replyMarkup: Keyboards.start, cancellationToken: _ct);
+                    return;
                 }
 
                 //присваиваю начальное значение введёного сообщения
-                eventMessage = input;
+                eventMessage = currentUserInput;
 
                 //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateStarted?.Invoke(eventMessage);
 
-                (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(input, currentUserTaskList);
+                (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(currentUserInput, currentUserTaskList);
 
-                input = inputCommand.Replace("/", string.Empty);
+                currentUserInput = inputCommand.Replace("/", string.Empty);
 
                 //парсинг команды
-                Command command = Helper.GetEnumValueOrDefault<Command>(input);
+                Command command = Helper.GetEnumValueOrDefault<Command>(currentUserInput);
 
                 //Работа с командой cancel и сценариями
                 if (command == Command.Cancel)
-                    await _scenarioContextRepository.ResetContext(telegramCurrentUserId, ct);
+                    await _scenarioContextRepository.ResetContext(currentUser.TelegramUserId, ct);
 
-                var scenarioContext = await _scenarioContextRepository.GetContext(telegramCurrentUserId, ct);
+                var scenarioContext = await _scenarioContextRepository.GetContext(currentUser.TelegramUserId, ct);
 
                 if (command == Command.Back)
                 {
                     if (scenarioContext.CurrentStep == "BaseProcedure")
                     {
-                        await _scenarioContextRepository.ResetContext(telegramCurrentUserId, ct);
+                        await _scenarioContextRepository.ResetContext(currentUser.TelegramUserId, ct);
                         scenarioContext = null;
                         command = Command.Main;
                     }
@@ -135,12 +126,10 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                 if (scenarioContext != null)
                 {
-                    await ProcessScenario(botClient, telegramCurrentUserId, scenarioContext, update, ct);
+                    await ProcessScenario(botClient, currentUser.TelegramUserId, scenarioContext, update, ct);
 
                     return;
                 }
-
-                Console.WriteLine(input);
 
                 //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateCompleted?.Invoke(eventMessage);
@@ -149,36 +138,23 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 switch (command)
                 {
                     case Command.Start:
-                        if (currentUser == null)
-                            currentUser = await _userService.RegisterUser(telegramCurrentUserId, telegramCurrentUserName, telegramUserFirstName, telegramUserLastName, _ct);
-
-                        await botClient.SendMessage(
-                            currentChat, 
-                            $"Спасибо за регистрацию, {(string.IsNullOrEmpty(telegramUserFirstName) ? telegramCurrentUserName : telegramUserFirstName)} 🤗", 
-                            replyMarkup: Keyboards.firstStep, 
-                            cancellationToken: _ct);
-                        //await Helper.CommandsRender(currentChat, botClient, _ct);
+                        await HandleStartCommand(botClient, currentChat, currentUser);
                         break;
 
                     case Command.Main:
-                        await botClient.SendMessage(
-                        currentChat,
-                        "Что хотите сделать?\n",
-                        replyMarkup: Keyboards.firstStep,
-                        cancellationToken: _ct);
-
+                        await botClient.SendMessage(currentChat, "Что хотите сделать?\n", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
                         break;
 
                     case Command.Help:
-                        await ShowHelp(botClient, currentChat, currentUser, _ct);
+                        await HandleHelpCommand(botClient, currentChat, currentUser, _ct);
                         break;
 
                     case Command.Info:
-                        await ShowInfo(botClient, currentChat, _ct);
+                        await HandleInfoCommand(botClient, currentChat, _ct);
                         break;
 
                      case Command.Show:
-                        await ShowAppointments(currentUser.UserId, botClient, currentChat, _ct, true);
+                        await HandleShowAppointmentsCommand(currentUser.UserId, botClient, currentChat, _ct, true);
                         break;
 
                     case Command.Del:
@@ -208,8 +184,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     case Command.Create:
                         await ProcessScenario(
                             botClient,
-                            telegramCurrentUserId,
-                            Helper.CreateScenarioContext(ScenarioType.AddAppointment, telegramCurrentUserId),
+                            currentUser.TelegramUserId,
+                            Helper.CreateScenarioContext(ScenarioType.AddAppointment, currentUser.TelegramUserId),
                             update,
                             ct);
 
@@ -238,50 +214,79 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
         private async Task OnCallbackQuery(ITelegramBotClient botClient, Update update, CallbackQuery callbackQuery, CancellationToken ct)
         {
-            Chat currentChat = update.CallbackQuery.Message.Chat;
-            long telegramCurrentUserId = update.CallbackQuery.From.Id;
-            string telegramCurrentUserName = update.CallbackQuery.From.Username;
-
-            string input = update.CallbackQuery.Data;
+            (Chat? currentChat, string? currentUserInput, int currentMessageId, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, _userService, ct);
 
             string eventMessage = "";
 
             try
             {
-                var currentUser = await _userService.GetUser(telegramCurrentUserId, _ct);
-
                 var currentUserAppointmentsList = currentUser != null
                     ? await _appointmentService.GetUserAppointmentsByUserId(currentUser.UserId, _ct)
                     : null;
 
-                if (currentUser == null)
+                if (currentUser == null && (currentUserInput != "/start" && currentUserInput != "Старт"))
                 {
-                    if (input != "/start" && input != "Старт")
-                    {
-                        await botClient.SendMessage(currentChat, "Для запуска бота необходимо нажать на кнопку ниже или ввести /start", replyMarkup: Keyboards.start, cancellationToken: _ct);
-                        return;
-                    }
+                    await botClient.SendMessage(currentChat, "Для запуска бота необходимо нажать на кнопку ниже или ввести /start", replyMarkup: Keyboards.start, cancellationToken: _ct);
+                    return;
                 }
 
-                //присваиваю начальное значение введёного сообщения
-                eventMessage = input;
+                eventMessage = currentUserInput;
 
-                //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateStarted?.Invoke(eventMessage);
 
-                (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(input, currentUserAppointmentsList);
+                (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(currentUserInput, currentUserAppointmentsList);
 
-                input = inputCommand.Replace("/", string.Empty);
+                currentUserInput = inputCommand.Replace("/", string.Empty);
 
                 //парсинг команды
-                Command command = Helper.GetEnumValueOrDefault<Command>(input);
+                Command command = Helper.GetEnumValueOrDefault<Command>(currentUserInput);
 
-                var scenarioContext = await _scenarioContextRepository.GetContext(telegramCurrentUserId, ct);
+                var scenarioContext = await _scenarioContextRepository.GetContext(currentUser.TelegramUserId, ct);
 
-                //Работа со стрелками смены месяца
-                if (command == Command.Changemonth)
+                var isHandled = await TryHandleCallbackCommandAsync(botClient, currentChat, command, scenarioContext, currentMessageId, ct, chooseMonth, chooseDate);
+
+                if (!isHandled)
                 {
-                    if (DateTime.TryParseExact(chooseMonth, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth) && scenarioContext != null)
+                    OnHandleUpdateCompleted?.Invoke(eventMessage);
+                    return;
+                }
+
+
+                if (scenarioContext != null)
+                {
+                    await ProcessScenario(botClient, currentUser.TelegramUserId, scenarioContext, update, ct);
+                    return;
+                }
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+
+        private async Task<bool> TryHandleCallbackCommandAsync(ITelegramBotClient botClient, Chat chat, Command command, ScenarioContext context, int messageId, CancellationToken ct, string chooseMonth = null, DateOnly chooseDate = default)
+        {
+            //обработка основных команд
+            switch (command)
+            {
+                case Command.CancelAppointment:
+                    Console.WriteLine("CancelAppointment");
+                    break;
+
+                case Command.EditAppointment:
+                    //await ShowHelp(currentUser);
+                    Console.WriteLine("EditAppointmentEditAppointment");
+                    break;
+
+                case Command.Date:
+                    if (context == null || context.CurrentStep != "DateProcedure")
+                        return false;
+                    return true;
+
+                case Command.Changemonth:
+                    if (DateTime.TryParseExact(chooseMonth, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth) && context != null)
                     {
                         var newCalendarMarkup = DaySlotsKeyboard(
                             newDisplayMonth,
@@ -290,56 +295,62 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                             await _slotService.GetUnavailableSlotsByDate(ct)
                             );
 
-                        await botClient.EditMessageReplyMarkup(currentChat, update.CallbackQuery.Message.Id, replyMarkup: newCalendarMarkup, cancellationToken: _ct);
+                        await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: newCalendarMarkup, cancellationToken: _ct);
+                        return true;
                     }
-                    return; 
-                }    
+                    return false;
 
-                if(command == Command.Date && (scenarioContext == null || scenarioContext.CurrentStep != "DateProcedure"))
-                     return;
+                case Command.Exit:
+                    //await ShowHelp(currentUser);
+                    Console.WriteLine("ExitExit");
+                    break;
 
-                if (scenarioContext != null)
-                {
-                    await ProcessScenario(botClient, telegramCurrentUserId, scenarioContext, update, ct);
+                default:
+                    await botClient.SendMessage(
+                        chat,
+                        "Введена некорректная команда. Пожалуйста, введите команду заново.\n",
+                        replyMarkup: chat != null ? Keyboards.firstStep : Keyboards.start,
+                        cancellationToken: _ct);
 
-                    return;
-                }
-
-                //КОНЕЦ ОБРАБОТКИ СООБЩЕНИЯ
-                OnHandleUpdateCompleted?.Invoke(eventMessage);
-
-                //обработка основных команд
-                switch (command)
-                {
-                    case Command.CancelAppointment:
-                        Console.WriteLine("CancelAppointment");
-                        break;
-
-                    case Command.EditAppointment:
-                        //await ShowHelp(currentUser);
-                        Console.WriteLine("EditAppointmentEditAppointment");
-                        break;
-
-                    case Command.Exit:
-                        //await ShowHelp(currentUser);
-                        Console.WriteLine("ExitExit");
-                        break;
-
-                    default:
-                        await botClient.SendMessage(
-                            currentChat, 
-                            "Введена некорректная команда. Пожалуйста, введите команду заново.\n", 
-                            replyMarkup: currentUser != null ? Keyboards.firstStep : Keyboards.start, 
-                            cancellationToken: _ct);
-
-                        break;
-                }
+                    return false;
             }
-            catch (Exception)
-            {
-                throw;
-            }
+
+            return true;
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         private static InlineKeyboardMarkup DaySlotsKeyboard(
             DateTime displayMonth,
@@ -453,7 +464,30 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
 
         #region МЕТОДЫ КОМАНД
-        private async Task ShowAppointments(
+
+
+        private async Task HandleStartCommand(ITelegramBotClient botClient, Chat chat, BeautyBotUser user)
+        {
+            if (user == null)
+                user = await _userService.RegisterUser(
+                    user.TelegramUserId,
+                    user.TelegramUserName,
+                    user.TelegramUserFirstName,
+                    user.TelegramUserLastName,
+                    _ct);
+
+            await botClient.SendMessage(
+                chat,
+                $"Спасибо за регистрацию, {(string.IsNullOrEmpty(user.TelegramUserFirstName) ? user.TelegramUserName : user.TelegramUserFirstName)} 🤗",
+                replyMarkup: Keyboards.firstStep,
+                cancellationToken: _ct);
+            //await Helper.CommandsRender(currentChat, botClient, _ct);
+        }
+
+
+
+
+        private async Task HandleShowAppointmentsCommand(
             Guid userId, 
             ITelegramBotClient botClient, 
             Chat currentChat, 
@@ -480,7 +514,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             await Helper.AppointmentsListRender(appointmentsList, botClient, currentChat, ct);
         }
 
-        private async Task ShowHelp(ITelegramBotClient botClient, Chat currentChat, BeautyBotUser user, CancellationToken ct)
+        private async Task HandleHelpCommand(ITelegramBotClient botClient, Chat currentChat, BeautyBotUser user, CancellationToken ct)
         {
             if (user == null)
             {
@@ -506,7 +540,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             }
         }
 
-        private async Task ShowInfo(ITelegramBotClient botClient, Chat currentChat, CancellationToken ct)
+        private async Task HandleInfoCommand(ITelegramBotClient botClient, Chat currentChat, CancellationToken ct)
         {
             DateTime releaseDate = new DateTime(2025, 06, 23);
             await botClient.SendMessage(currentChat, $"Это BeautyBot версии 1.0 Beta. Релиз {releaseDate}.\n", cancellationToken: ct);
@@ -539,6 +573,30 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 await _scenarioContextRepository.SetContext(telegramUserId, context, ct);
         }
         #endregion
+
+
+        #region МЕТОДЫ ОБРАБОТЧИКИ КОМАНД
+
+
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken ct)
         {

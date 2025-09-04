@@ -3,12 +3,9 @@ using System.Text;
 using BeautyBot.src.BeautyBot.Core.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot;
-using Telegram.Bot.Types.ReplyMarkups;
 using System.Globalization;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Domain.Services;
-using System.Security.Cryptography.X509Certificates;
-using static LinqToDB.Reflection.Methods.LinqToDB.Insert;
 
 namespace BeautyBot.src
 {
@@ -251,33 +248,32 @@ namespace BeautyBot.src
         /// </list>
         /// Возвращает кортеж из всех null-значений, если обновление не содержит сообщения или колбэка.
         /// </returns>
-        public static async Task<(Chat?, string?, int, BeautyBotUser?)> HandleMessageAsyncGetData(Update update, ScenarioContext context, IUserService userService, CancellationToken ct)
+        public static async Task<(Chat?, string?, int, BeautyBotUser?)> HandleMessageAsyncGetData(Update update, IUserService userService, CancellationToken ct)
         {
-            Message? message;
-            string? currentUserInput;
-            int messageId;
-
             if (update.Message != null)
             {
-                message = update.Message;
-                messageId = update.Message.Id;
-                currentUserInput = message.Text?.Trim();
+                return (
+                    update.Message.Chat,
+                    update.Message.Text?.Trim(),
+                    update.Message.Id,
+                    await userService.GetUser(update.Message.From.Id, ct)
+                    );
+
+
             }
             else if (update.CallbackQuery != null)
             {
-                message = update.CallbackQuery.Message;
-                messageId = update.CallbackQuery.Message.Id;
-                currentUserInput = update.CallbackQuery.Data.Trim();
+                return (
+                    update.CallbackQuery.Message.Chat,
+                    update.CallbackQuery.Data?.Trim(),
+                    update.CallbackQuery.Message.Id,
+                    await userService.GetUser(update.CallbackQuery.From.Id, ct)
+                    );
             }
             else
             {
-                return default;
+                return (null, null, 0, null);
             }
-
-            var currentChat = message.Chat;
-            var currentUser = await GetUserInScenario(context, currentChat.Id, currentChat.Username, userService, ct);
-
-            return (currentChat, currentUserInput, messageId, currentUser);
         }
 
         /// <summary>

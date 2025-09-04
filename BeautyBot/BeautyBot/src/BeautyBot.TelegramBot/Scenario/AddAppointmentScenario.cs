@@ -40,7 +40,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
             if (update.Message == null && update.CallbackQuery == null)
                 return ScenarioResult.Completed;
 
-            (Chat? currentChat, string? currentUserInput, int currentMessageId, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, context, _userService, ct);
+            (Chat? currentChat, string? currentUserInput, int currentMessageId, BeautyBotUser? currentUser) = await Helper.HandleMessageAsyncGetData(update, _userService, ct);
 
             switch (context.CurrentStep)
             {
@@ -81,11 +81,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             return ScenarioResult.Transition;
         }
-
-
-
-
-
         private async Task<ScenarioResult> HandleBaseProcedureStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
         {
             if (userInput == Constants.Back)
