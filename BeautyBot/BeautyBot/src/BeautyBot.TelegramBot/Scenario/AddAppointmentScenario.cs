@@ -192,25 +192,25 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                     Keyboards = new List<ReplyMarkup>() { Keyboards.cancelOrBack, calendarMarkup }
             };
         }
-        //private async Task<ScenarioResult> HandleChooseDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, int messageId, CancellationToken ct)
-        //{
-        //    if (userInput == Constants.Back)
-        //    { 
-        //        context.CurrentStep = "TypeProcedure";
+        private async Task<ScenarioResult> HandleChooseDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, int messageId, CancellationToken ct)
+        {
+            if (userInput == Constants.Back)
+            {
+                context.CurrentStep = "TypeProcedure";
 
-        //        return await HandleTypeProcedureStep(botClient, context, chat, context.DataHistory.Pop(), messageId, ct);
-        //    }
+                return await HandleTypeProcedureStep(botClient, context, chat, context.DataHistory.Pop(), messageId, ct);
+            }
 
-        //    var date = Helper.ParseDateFromString(userInput);
+            var date = Helper.ParseDateFromString(userInput);
 
-        //    await botClient.SendMessage(chat, $"Выбранная дата - {date}\n\nВерно?", replyMarkup: Keyboards.approveDate, cancellationToken: ct);
+            await botClient.SendMessage(chat, $"Выбранная дата - {date}\n\nВерно?", replyMarkup: Keyboards.approveDate, cancellationToken: ct);
 
-        //    context.Data["DateProcedure"] = date;
+            context.Data["DateProcedure"] = date;
 
-        //    context.CurrentStep = "ApproveDateProcedure";
+            context.CurrentStep = "ApproveDateProcedure";
 
-        //    return ScenarioResult.Transition;
-        //}
+            return ScenarioResult.Transition;
+        }
         //private async Task<ScenarioResult> HandleApproveDateStep(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, int messageId, CancellationToken ct)
         //{
         //    if (userInput != Constants.Accept)
