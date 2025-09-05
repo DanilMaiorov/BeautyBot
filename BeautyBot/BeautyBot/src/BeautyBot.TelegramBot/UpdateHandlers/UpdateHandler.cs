@@ -277,29 +277,23 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             await botClient.DeleteMessage(chatId: chat, messageId: messageId - 2, cancellationToken: ct);
             await botClient.DeleteMessage(chatId: chat, messageId: messageId - 1, cancellationToken: ct);
 
+            context.DataHistory.Pop();
+
             context.CurrentStep = "DateProcedure";
 
             context.Data[context.CurrentStep] = null;
 
             await botClient.SendMessage(chat, "Выберите другую дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: _ct);
-            await botClient.SendMessage(chat, "✖ - означает, что на выбранную дату нет свободных слотов", replyMarkup: Keyboards.DaySlotsKeyboard(unavailableSlots), cancellationToken: _ct);
+            await botClient.SendMessage(chat, "✖ - означает, что на выбранную дату нет свободных слотов", replyMarkup: Keyboards.DaySlotsKeyboard(DateTime.Today, unavailableSlots), cancellationToken: _ct);
         }
 
         private async Task HandleChangeTimeCommand(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
         {
-            if (!context.Data.TryGetValue("DateProcedure", out var dateObj))
-                throw new KeyNotFoundException("Не найдена контекст даты");
+            context.DataHistory.Pop();
 
-            if (dateObj is not DateOnly date)
-                throw new InvalidCastException($"Ожидался DateOnly, получен {dateObj?.GetType().Name ?? "null"}");
-
-            var slots = await _slotService.GetSlotsByDate(date, ct);
-
-            context.CurrentStep = "TimeProcedure";
+            context.CurrentStep = "ApproveDateProcedure";
 
             context.Data[context.CurrentStep] = null;
-
-            await botClient.SendMessage(chat, "Выберите другое время", replyMarkup: Keyboards.TimeSlotsKeyboard(slots), cancellationToken: _ct);
         }
 
 
@@ -424,8 +418,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             }
 
 
-
-
             if (context.LastResponse.Result == ScenarioResult.Completed)
                 await _scenarioContextRepository.ResetContext(telegramUserId, ct);
             else
@@ -520,30 +512,23 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     {
                         await _scenarioContextRepository.ResetContext(user.TelegramUserId, ct);
 
-                        await botClient.SendMessage(chat, "Что хотите сделать?\n", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
+                        await botClient.SendMessage(chat, "Вы в главном меню. Что хотите сделать?\n", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
 
                         return (true, null);
                     }
                     else
                     {
-                        var lastKey = context.Data.Keys.Last();
-
-                        context.CurrentStep = lastKey;
-
-                        context.Data.Remove(lastKey);
+                        context.Data.Remove(context.Data.Keys.Last());
                     }
 
+                    context.CurrentStep = context.Data.Keys.Last();
+
+                    if (context.CurrentStep == "User")
+                        context.CurrentStep = null;
+
+                    context.DataHistory.Pop();
+
                     return (true, context);
-
-
-
-
-
-
-
-
-
-
 
                 case Command.Cancel:
                     await _scenarioContextRepository.ResetContext(user.TelegramUserId, ct);
@@ -613,7 +598,13 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     {
                         var unavailableSlots = await _slotService.GetUnavailableSlotsByDate(ct);
 
-                        await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: Keyboards.DaySlotsKeyboard(unavailableSlots), cancellationToken: _ct);
+                        await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: Keyboards.DaySlotsKeyboard(newDisplayMonth, unavailableSlots), cancellationToken: _ct);
+//
+//
+//
+//
+//
+
                     }
                     return false;
 

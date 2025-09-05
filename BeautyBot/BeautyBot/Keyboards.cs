@@ -129,126 +129,13 @@ namespace BeautyBot
         /// Доступные дни отображаются числом и имеют callback в формате "day_selected_yyyy-MM-dd".
         /// Включает строку с названиями дней недели (начиная с понедельника) и навигационные кнопки для переключения месяцев.
         /// </remarks>
-        public static InlineKeyboardMarkup DaySlotsKeyboard(List<DateOnly> unavailableDays)
+        public static InlineKeyboardMarkup DaySlotsKeyboard(DateTime newDisplayMonth, List<DateOnly> unavailableDays)
         {
-            string PrevMonthCallback = "prev_month_";
-            string NextMonthCallback = "next_month_";
-            string DaySelectedCallback = "day_selected_";
-
-            //Значение дней для рендера календаря заданы хардкодом. Отсчет от текущего дня и на 60 дней вперед
-            DateTime displayMonth = DateTime.Today;
             DateTime minDate = DateTime.Today;
             DateTime maxDate = DateTime.Today.AddDays(60);
 
-            var keyboardButtons = new List<List<InlineKeyboardButton>>();
-
-            // Add day names row
-            var dayNamesRow = new List<InlineKeyboardButton>();
-            for (int i = 0; i < 7; i++)
-            {
-                dayNamesRow.Add(InlineKeyboardButton.WithCallbackData(
-                    CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames[(i + (int)DayOfWeek.Monday) % 7], // Start from Monday
-                    "day_name_no_action" // No action for day names
-                ));
-            }
-            keyboardButtons.Add(dayNamesRow);
-
-            // Add month days
-            var firstDayOfMonth = new DateTime(displayMonth.Year, displayMonth.Month, 1);
-            var daysInMonth = DateTime.DaysInMonth(displayMonth.Year, displayMonth.Month);
-
-            // Calculate offset for the first day of the month (0 for Monday, 6 for Sunday)
-            int offset = ((int)firstDayOfMonth.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
-
-            var currentRow = new List<InlineKeyboardButton>();
-
-            // Add empty buttons for the days before the first day of the month
-            for (int i = 0; i < offset; i++)
-                currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
-
-            for (int day = 1; day <= daysInMonth; day++)
-            {
-                var currentDay = new DateTime(displayMonth.Year, displayMonth.Month, day);
-                var currentDateOnly = DateOnly.FromDateTime(currentDay);
-                // Check if the day is within the allowed range
-                bool isDayValid = currentDay >= minDate && currentDay <= maxDate;
-                bool isDayAvailable = isDayValid && !unavailableDays.Contains(currentDateOnly);
-
-                if (isDayValid)
-                {
-                    currentRow.Add(InlineKeyboardButton.WithCallbackData(
-                        isDayAvailable ? day.ToString() : "✖",
-                        isDayAvailable ? $"{DaySelectedCallback}{currentDay:yyyy-MM-dd}" : "day_unavailable"
-                    ));
-                }
-                else
-                {
-                    currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
-                }
-
-                if (currentRow.Count == 7)
-                {
-                    keyboardButtons.Add(currentRow);
-                    currentRow = new List<InlineKeyboardButton>();
-                }
-            }
-            // Add remaining empty buttons for the last row
-            if (currentRow.Any())
-            {
-                while (currentRow.Count < 7)
-                    currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
-
-                keyboardButtons.Add(currentRow);
-            }
-
-            // Add navigation row
-            var navigationRow = new List<InlineKeyboardButton>();
-
-            // Previous month button (only if not the starting month)
-            if (displayMonth.Year > minDate.Year || (displayMonth.Year == minDate.Year && displayMonth.Month > minDate.Month))
-            {
-                navigationRow.Add(InlineKeyboardButton.WithCallbackData(
-                    "<",
-                    $"{PrevMonthCallback}{displayMonth.AddMonths(-1):yyyy-MM-dd}"
-                ));
-            }
-            else
-            {
-                navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
-            }
-
-            navigationRow.Add(InlineKeyboardButton.WithCallbackData(
-                displayMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture),
-                "month_display_no_action"
-            ));
-
-            // Next month button (only if there are available days in the next month within the 60-day range)
-            if (displayMonth.AddMonths(1) <= maxDate.AddDays(1).Date) // Check if next month potentially contains valid dates
-            {
-                // Check if any day in the next month falls within the maxDate range
-                var nextMonthFirstDay = new DateTime(displayMonth.AddMonths(1).Year, displayMonth.AddMonths(1).Month, 1);
-                if (nextMonthFirstDay <= maxDate)
-                {
-                    navigationRow.Add(InlineKeyboardButton.WithCallbackData(
-                        ">",
-                        $"{NextMonthCallback}{displayMonth.AddMonths(1):yyyy-MM-dd}"
-                    ));
-                }
-                else
-                {
-                    navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
-                }
-            }
-            else
-            {
-                navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
-            }
-
-            keyboardButtons.Add(navigationRow);
-
-            return new InlineKeyboardMarkup(keyboardButtons);
+            return DaySlotsKeyboard(newDisplayMonth, minDate, maxDate, unavailableDays);
         }
-
 
         /// <summary>
         /// Создает inline-клавиатуру календаря для выбора даты с пользовательскими параметрами отображения.
