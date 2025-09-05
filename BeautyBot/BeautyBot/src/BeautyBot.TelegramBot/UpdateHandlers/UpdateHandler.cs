@@ -8,9 +8,6 @@ using System.Globalization;
 using Telegram.Bot.Types.ReplyMarkups;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
-using System.Collections.Generic;
-using System;
-//using static LinqToDB.Reflection.Methods.LinqToDB;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -263,12 +260,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         private async Task HandleStartCommand(ITelegramBotClient botClient, Chat chat, BeautyBotUser user)
         {
             if (user == null)
-                user = await _userService.RegisterUser(
-                    user.TelegramUserId,
-                    user.TelegramUserName,
-                    user.TelegramUserFirstName,
-                    user.TelegramUserLastName,
-                    _ct);
+                user = await _userService.RegisterUser(user, _ct);
 
             await botClient.SendMessage(
                 chat,
@@ -277,6 +269,39 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 cancellationToken: _ct);
             //await Helper.CommandsRender(currentChat, botClient, _ct);
         }
+
+        private async Task HandleChangeDateCommand(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, int messageId, CancellationToken ct)
+        {
+            var unavailableSlots = await _slotService.GetUnavailableSlotsByDate(ct);
+
+            await botClient.DeleteMessage(chatId: chat, messageId: messageId - 2, cancellationToken: ct);
+            await botClient.DeleteMessage(chatId: chat, messageId: messageId - 1, cancellationToken: ct);
+
+            context.CurrentStep = "DateProcedure";
+
+            context.Data[context.CurrentStep] = null;
+
+            await botClient.SendMessage(chat, "Выберите другую дату", replyMarkup: Keyboards.cancelOrBack, cancellationToken: _ct);
+            await botClient.SendMessage(chat, "✖ - означает, что на выбранную дату нет свободных слотов", replyMarkup: Keyboards.DaySlotsKeyboard(unavailableSlots), cancellationToken: _ct);
+        }
+
+        private async Task HandleChangeTimeCommand(ITelegramBotClient botClient, ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
+        {
+            if (!context.Data.TryGetValue("DateProcedure", out var dateObj))
+                throw new KeyNotFoundException("Не найдена контекст даты");
+
+            if (dateObj is not DateOnly date)
+                throw new InvalidCastException($"Ожидался DateOnly, получен {dateObj?.GetType().Name ?? "null"}");
+
+            var slots = await _slotService.GetSlotsByDate(date, ct);
+
+            context.CurrentStep = "TimeProcedure";
+
+            context.Data[context.CurrentStep] = null;
+
+            await botClient.SendMessage(chat, "Выберите другое время", replyMarkup: Keyboards.TimeSlotsKeyboard(slots), cancellationToken: _ct);
+        }
+
 
         private async Task HandleShowAppointmentsCommand(
             Guid userId, 
@@ -411,7 +436,15 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
         #region МЕТОДЫ ОБРАБОТЧИКИ КОМАНД
 
-        private async Task<(bool isHandled, ScenarioContext updatedContext)> TryHandleOnMessageCommandAsync(ITelegramBotClient botClient, Update update, Chat chat, BeautyBotUser user, string input, ScenarioContext context, int messageId, CancellationToken ct)
+        private async Task<(bool isHandled, ScenarioContext updatedContext)> TryHandleOnMessageCommandAsync(
+            ITelegramBotClient botClient, 
+            Update update, 
+            Chat chat, 
+            BeautyBotUser user, 
+            string input, 
+            ScenarioContext context, 
+            int messageId, 
+            CancellationToken ct)
         {
 
             (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(input);
@@ -459,11 +492,21 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 case Command.Classic:
                 case Command.GelPolish:
                 case Command.French:
-                case Command.ChangeDate:
-                case Command.ChangeTime:
                 case Command.Time:
                 case Command.Approve:
                     return (true, context);
+
+
+
+
+                case Command.ChangeDate:
+                    await HandleChangeDateCommand(botClient, context, chat, input, messageId, ct);
+                    break;
+
+                case Command.ChangeTime:
+                    await HandleChangeTimeCommand(botClient, context, chat, input, ct);
+                    break;
+
 
 
 
@@ -491,6 +534,16 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     }
 
                     return (true, context);
+
+
+
+
+
+
+
+
+
+
 
                 case Command.Cancel:
                     await _scenarioContextRepository.ResetContext(user.TelegramUserId, ct);
@@ -555,17 +608,12 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 case Command.Date:
                     return context != null && context.CurrentStep == "DateProcedure";
 
-                case Command.Changemonth:
+                case Command.ChangeMonth:
                     if (DateTime.TryParseExact(chooseMonth, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth) && context != null)
                     {
-                        var newCalendarMarkup = DaySlotsKeyboard(
-                            newDisplayMonth,
-                            DateTime.Today,
-                            DateTime.Today.AddDays(60),
-                            await _slotService.GetUnavailableSlotsByDate(ct)
-                            );
+                        var unavailableSlots = await _slotService.GetUnavailableSlotsByDate(ct);
 
-                        await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: newCalendarMarkup, cancellationToken: _ct);
+                        await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: Keyboards.DaySlotsKeyboard(unavailableSlots), cancellationToken: _ct);
                     }
                     return false;
 

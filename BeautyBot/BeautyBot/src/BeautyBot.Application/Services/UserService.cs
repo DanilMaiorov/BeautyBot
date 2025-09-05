@@ -29,15 +29,15 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         /// <param name="telegramUserName">Имя в Телеграм</param>
         /// <param name="ct"></param>
         /// <returns>BeautyBotUser</returns>
-        public async Task<BeautyBotUser> RegisterUser(long userId, string userName, string firstName, string lastName, CancellationToken ct)
+        public async Task<BeautyBotUser> RegisterUser(BeautyBotUser user, CancellationToken ct)
         {
             var newUser = new BeautyBotUser
             {
                 UserId = Guid.NewGuid(),
-                TelegramUserId = userId,
-                TelegramUserName = userName,
-                TelegramUserFirstName = firstName,
-                TelegramUserLastName = lastName,
+                TelegramUserId = user.TelegramUserId,
+                TelegramUserName = user.TelegramUserName,
+                TelegramUserFirstName = user.TelegramUserFirstName,
+                TelegramUserLastName = user.TelegramUserLastName,
                 RegisteredAt = DateTime.Now
             };
 
