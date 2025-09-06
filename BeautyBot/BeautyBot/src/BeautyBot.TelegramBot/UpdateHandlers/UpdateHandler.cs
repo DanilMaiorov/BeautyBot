@@ -8,6 +8,7 @@ using System.Globalization;
 using Telegram.Bot.Types.ReplyMarkups;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
+using System;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -32,22 +33,16 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             IUserService userService,
             IAppointmentService appointmentService,
             PostgreSqlProcedureRepository procedureRepository,
-
             ISlotService slotService,
-
             IEnumerable<IScenario> scenarios,
             IScenarioContextRepository contextRepository,
-
             CancellationToken ct)
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _appointmentService = appointmentService ?? throw new ArgumentNullException(nameof(appointmentService));
-
             _slotService = slotService;
-
             _scenarios = scenarios;
             _scenarioContextRepository = contextRepository;
-
             _ct = ct;
         }
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
@@ -81,7 +76,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     return;
                 }
 
-                //НАЧАЛО ОБРАБОТКИ СООБЩЕНИЯ
                 OnHandleUpdateStarted?.Invoke(eventMessage);
 
                 var scenarioContext = await _scenarioContextRepository.GetContext(currentUser.TelegramUserId, ct);
@@ -296,6 +290,33 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             context.Data[context.CurrentStep] = null;
         }
 
+        private async Task HandleBackCommand(ITelegramBotClient botClient, ScenarioContext context, Chat chat, long telegramUserId, CancellationToken ct)
+        {
+            if (context.CurrentStep == "BaseProcedure")
+            {
+                await _scenarioContextRepository.ResetContext(telegramUserId, ct);
+
+                await botClient.SendMessage(chat, "Вы в главном меню. Что хотите сделать?\n", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
+
+                return;
+            }
+            else
+            {
+                if (context.Data?.Keys?.Any() == true)
+                {
+                    var lastKey = context.Data.Keys.Last();
+                    context.Data.Remove(lastKey);
+                }
+            }
+
+            context.CurrentStep = context.Data?.Keys?.LastOrDefault() ?? "BaseProcedure";
+
+            if (context.CurrentStep == "User")
+                context.CurrentStep = null;
+
+            if (context.DataHistory?.Count > 0)
+                context.DataHistory.Pop();
+        }
 
         private async Task HandleShowAppointmentsCommand(
             Guid userId, 
@@ -508,27 +529,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     break;
 
                 case Command.Back:
-                    if (context.CurrentStep == "BaseProcedure")
-                    {
-                        await _scenarioContextRepository.ResetContext(user.TelegramUserId, ct);
-
-                        await botClient.SendMessage(chat, "Вы в главном меню. Что хотите сделать?\n", replyMarkup: Keyboards.firstStep, cancellationToken: _ct);
-
-                        return (true, null);
-                    }
-                    else
-                    {
-                        context.Data.Remove(context.Data.Keys.Last());
-                    }
-
-                    context.CurrentStep = context.Data.Keys.Last();
-
-                    if (context.CurrentStep == "User")
-                        context.CurrentStep = null;
-
-                    context.DataHistory.Pop();
-
-                    return (true, context);
+                    await HandleBackCommand(botClient, context, chat, user.TelegramUserId, ct);
+                    break;
 
                 case Command.Cancel:
                     await _scenarioContextRepository.ResetContext(user.TelegramUserId, ct);

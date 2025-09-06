@@ -19,7 +19,10 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
         public Task ResetContext(long userId, CancellationToken ct)
         {
             if (_scenarioContext.TryRemove(userId, out var removedContext))
+            {
+                //removedContext = null;
                 Console.WriteLine($"Контекст пользователя {userId} успешно удален.");
+            }
             else
                 Console.WriteLine($"Контекст для пользователя {userId} не найден или уже был удален.");
 

@@ -68,6 +68,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
                 case "ApproveTimeProcedure":
                     return await HandleApproveTimeStep(botClient, context, currentChat, currentUserInput, ct);
+
                 default:
                     await botClient.SendMessage(currentChat, "Неизвестный шаг сценария", replyMarkup: Keyboards.firstStep, cancellationToken: ct);
                     break;
@@ -236,24 +237,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                 Keyboard = Keyboards.firstStep
             };
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 }
 

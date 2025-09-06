@@ -163,6 +163,7 @@ namespace BeautyBot.src
                 case "empty_day":
                 case "month_display_no_action":
                 case "day_name_no_action":
+                case "day_unavailable":
                     inputLower = "/date";
                     break;
 
