@@ -15,6 +15,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers
                 TelegramUserFirstName = model.TelegramUserFirstName,
                 TelegramUserLastName = model.TelegramUserLastName,
                 RegisteredAt = model.RegisteredAt,
+                Role = model.Role,
             } : null;
         }
         public static BeautyBotUserModel MapToModel(BeautyBotUser entity)
@@ -27,6 +28,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers
                 TelegramUserFirstName = entity.TelegramUserFirstName,
                 TelegramUserLastName = entity.TelegramUserLastName,
                 RegisteredAt = entity.RegisteredAt,
+                Role = entity.Role,
             };
         }
     }

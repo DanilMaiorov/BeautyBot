@@ -1,6 +1,5 @@
 ﻿namespace BeautyBot.src.BeautyBot.Core.Enums
 {
-
     /// <summary>
     /// Список ролей, кто использует бота
     /// </summary>
@@ -9,6 +8,7 @@
         None = 0,
         Owner,
         Admin,
+        Master,
         User
     }
 }

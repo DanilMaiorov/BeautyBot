@@ -10,9 +10,10 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
 {
     public interface IMessageService
     {
-        Task<Message> SendMessage(Chat chat, string message, ReplyMarkup replyMarkup, CancellationToken ct);
-        Task<Message> SendMultiMessage();
-        Task<Message> EditMessage();
-        Task<Message> DeleteMessage();
+        Task SendMessage(Chat chat, string message, ReplyMarkup replyMarkup, CancellationToken ct);
+        Task SendMultiMessage(Chat chat, List<(string message, ReplyMarkup keyboard)> messages, CancellationToken ct);
+        Task DeleteMessage(Chat chat, int messageId, CancellationToken ct);
+        Task DeleteMultiMessage(Chat chat, List<int> messageIds, CancellationToken ct);
+        Task EditMessage(Chat chat, int messageId, InlineKeyboardMarkup keyboard, CancellationToken ct);
     }
 }

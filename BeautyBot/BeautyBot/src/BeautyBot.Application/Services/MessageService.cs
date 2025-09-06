@@ -1,5 +1,6 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
+using System;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -15,31 +16,31 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             _botClient = botClient;
         }
 
-
-        public async Task<Message> SendMessage(Chat chat, string message, ReplyMarkup replyMarkup, CancellationToken ct)
+        public async Task SendMessage(Chat chat, string message, ReplyMarkup replyMarkup, CancellationToken ct)
         {
-            return await _botClient.SendMessage(chat, message, replyMarkup: replyMarkup, cancellationToken: ct);
+            await _botClient.SendMessage(chat, message, replyMarkup: replyMarkup, cancellationToken: ct);
+        }
+        
+        public async Task SendMultiMessage(Chat chat, List<(string message, ReplyMarkup keyboard)> messages, CancellationToken ct)
+        {
+            foreach (var message in messages)
+                await SendMessage(chat, message.message, message.keyboard, ct);
         }
 
-        public Task<Message> SendMultiMessage()
+        public async Task DeleteMessage(Chat chat, int messageId, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            await _botClient.DeleteMessage(chatId: chat, messageId: messageId, cancellationToken: ct);
         }
 
-
-
-
-
-
-
-        public Task<Message> DeleteMessage()
+        public async Task DeleteMultiMessage(Chat chat, List<int> messageIds, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            foreach (var messageId in messageIds)
+                await DeleteMessage(chat, messageId, ct);
         }
 
-        public Task<Message> EditMessage()
+        public async Task EditMessage(Chat chat, int messageId, InlineKeyboardMarkup keyboard, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            await _botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: keyboard, cancellationToken: ct);
         }
     }
 }

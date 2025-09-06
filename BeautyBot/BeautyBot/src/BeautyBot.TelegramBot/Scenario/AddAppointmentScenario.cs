@@ -56,7 +56,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
                     return await HandleApproveTimeStep(context, messageData.Chat, messageData.UserInput, ct);
 
                 default:
-                    return new ScenarioResponse(ScenarioResult.Transition, messageData.Chat.Id)
+                    return new ScenarioResponse(ScenarioResult.Transition, messageData.Chat)
                     {
                         Message = "Неизвестный шаг сценария",
                         Keyboard = Keyboards.firstStep
@@ -71,7 +71,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             context.CurrentStep = "BaseProcedure";
 
-            return new ScenarioResponse(ScenarioResult.Transition, chat.Id)
+            return new ScenarioResponse(ScenarioResult.Transition, chat)
             {
                 Message = "Куда записываемся?",
                 Keyboard = Keyboards.secondStep
@@ -106,7 +106,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             context.CurrentStep = "TypeProcedure";
 
-            return new ScenarioResponse(ScenarioResult.Transition, chat.Id)
+            return new ScenarioResponse(ScenarioResult.Transition, chat)
             {
                 Message = message,
                 Keyboard = keyboard
@@ -130,10 +130,15 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             context.CurrentStep = "DateProcedure";
 
-            return new ScenarioResponse(ScenarioResult.Transition, chat.Id)
+            var messagesToSend = new List<(string messages, ReplyMarkup keyboards)> 
             {
-                Messages = new List<string>() { "Выберите дату", "✖ - означает, что на выбранную дату нет свободных слотов" },
-                Keyboards = new List<ReplyMarkup>() { Keyboards.cancelOrBack, Keyboards.DaySlotsKeyboard(DateTime.Today, unavailableSlots)}
+                ("Выберите дату", Keyboards.cancelOrBack),
+                ("✖ - означает, что на выбранную дату нет свободных слотов", Keyboards.DaySlotsKeyboard(DateTime.Today, unavailableSlots))
+            };
+
+            return new ScenarioResponse(ScenarioResult.Transition, chat)
+            {
+                Messages = messagesToSend
             };
         }
         private async Task<ScenarioResponse> HandleChooseDateStep(ScenarioContext context, Chat chat, string userInput, CancellationToken ct)
@@ -148,7 +153,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             context.CurrentStep = "ApproveDateProcedure";
 
-            return new ScenarioResponse(ScenarioResult.Transition, chat.Id)
+            return new ScenarioResponse(ScenarioResult.Transition, chat)
             {
                 Message = $"Выбранная дата - {date}\n\nВерно?",
                 Keyboard = Keyboards.approveDate
@@ -171,7 +176,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             context.CurrentStep = "TimeProcedure";
 
-            return new ScenarioResponse(ScenarioResult.Transition, chat.Id)
+            return new ScenarioResponse(ScenarioResult.Transition, chat)
             {
                 Message = message.ToString(),
                 Keyboard = Keyboards.TimeSlotsKeyboard(slots)
@@ -190,7 +195,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             context.CurrentStep = "ApproveTimeProcedure";
 
-            return new ScenarioResponse(ScenarioResult.Transition, chat.Id)
+            return new ScenarioResponse(ScenarioResult.Transition, chat)
             {
                 Message = $"Выбранное время - {time}\n\nВерно?",
                 Keyboard = Keyboards.approveTime
@@ -209,7 +214,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 
             await _slotService.UpdateSlotFromAppointment(newAppointment, ct);
 
-            return new ScenarioResponse(ScenarioResult.Completed, chat.Id)
+            return new ScenarioResponse(ScenarioResult.Completed, chat)
             {
                 Message = $"Вы успешно записаны🤗\n\nЖдём Вас {context.Data["DateProcedure"]} в {context.Data["TimeProcedure"]}\n\nПо адресу г. Екатеринбург ул. Ленина 1, офис 101\n\nПрекрасного дня ☀️",
                 Keyboard = Keyboards.firstStep

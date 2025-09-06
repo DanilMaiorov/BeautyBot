@@ -1,19 +1,19 @@
-﻿using Telegram.Bot.Types.ReplyMarkups;
+﻿using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 {
     public class ScenarioResponse
     {
-        public ScenarioResponse(ScenarioResult result, long chat) 
+        public ScenarioResponse(ScenarioResult result, Chat chat) 
         {
             Result = result;
             Chat = chat;
         }
         public ScenarioResult Result { get; set; }
+        public Chat Chat { get; set; }
         public string Message { get; set; }
-        public long Chat {  get; set; }
-        public List<string> Messages { get; set; }
         public ReplyMarkup Keyboard { get; set; }
-        public List<ReplyMarkup> Keyboards { get; set; }
+        public List<(string message, ReplyMarkup keyboard)> Messages { get; set; }
     }
 }

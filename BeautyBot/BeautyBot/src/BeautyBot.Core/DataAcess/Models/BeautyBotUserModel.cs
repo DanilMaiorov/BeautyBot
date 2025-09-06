@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using BeautyBot.src.BeautyBot.Core.Enums;
+using LinqToDB.Mapping;
 
 namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
 {
@@ -11,16 +12,19 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
         [Column("TelegramId"), NotNull]
         public long TelegramUserId { get; set; }
 
-        [Column("UserName"), NotNull]
+        [Column("UserName")]
         public string? TelegramUserName { get; set; }
 
-        [Column("FirstName"), NotNull]
+        [Column("FirstName")]
         public string? TelegramUserFirstName { get; set; }
 
-        [Column("LastName"), NotNull]
+        [Column("LastName")]
         public string? TelegramUserLastName { get; set; }
 
         [Column("RegisteredAt"), NotNull]
         public DateTime RegisteredAt { get; set; }
+
+        [Column("UserRole"), NotNull]
+        public UserRole Role { get; set; }
     }
 }

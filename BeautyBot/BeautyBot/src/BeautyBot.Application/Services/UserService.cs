@@ -1,6 +1,7 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using BeautyBot.src.BeautyBot.Domain.Services;
+using Telegram.Bot.Types;
 
 namespace BeautyBot.src.BeautyBot.Application.Services
 {
@@ -29,16 +30,15 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         /// <param name="telegramUserName">Имя в Телеграм</param>
         /// <param name="ct"></param>
         /// <returns>BeautyBotUser</returns>
-        public async Task<BeautyBotUser> RegisterUser(BeautyBotUser user, CancellationToken ct)
+        public async Task<BeautyBotUser> RegisterUser(long telegramId, string userName, string userFirstName, string userLastName, CancellationToken ct)
         {
             var newUser = new BeautyBotUser
             {
                 UserId = Guid.NewGuid(),
-                TelegramUserId = user.TelegramUserId,
-                TelegramUserName = user.TelegramUserName,
-                TelegramUserFirstName = user.TelegramUserFirstName,
-                TelegramUserLastName = user.TelegramUserLastName,
-                RegisteredAt = DateTime.Now
+                TelegramUserId = telegramId,
+                TelegramUserName = userName,
+                TelegramUserFirstName = userFirstName,
+                TelegramUserLastName = userLastName,
             };
 
             await _userRepository.Add(newUser, ct);

@@ -1,4 +1,6 @@
-﻿namespace BeautyBot.src.BeautyBot.Domain.Entities
+﻿using BeautyBot.src.BeautyBot.Core.Enums;
+
+namespace BeautyBot.src.BeautyBot.Domain.Entities
 {
     /// <summary>
     /// Класс описания юзера(клиента)
@@ -10,6 +12,7 @@
         public string? TelegramUserName { get; set; }
         public string? TelegramUserFirstName { get; set; }
         public string? TelegramUserLastName { get; set; }
-        public DateTime RegisteredAt { get; set; }
+        public DateTime RegisteredAt { get; set; } = DateTime.Now;
+        public UserRole Role { get; set; } = UserRole.User;
     }
 }
