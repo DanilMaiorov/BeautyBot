@@ -4,6 +4,11 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 {
     public class ScenarioResponse
     {
+        public ScenarioResponse(ScenarioResult result, long chat) 
+        {
+            Result = result;
+            Chat = chat;
+        }
         public ScenarioResult Result { get; set; }
         public string Message { get; set; }
         public long Chat {  get; set; }

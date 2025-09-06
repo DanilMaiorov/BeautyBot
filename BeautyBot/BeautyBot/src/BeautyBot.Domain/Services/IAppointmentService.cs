@@ -9,11 +9,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task<IReadOnlyList<Appointment>> GetUserAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<IReadOnlyList<Appointment>> GetUserActiveAppointmentsByUserId(Guid userId, CancellationToken ct);
         Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateOnly date, TimeOnly time, CancellationToken ct);
-
         Task CancelAppointment(Guid appointmentId, CancellationToken ct);
-
-        //void CompleteAppointment(Guid appointmentId);
-
         Task UpdateAppointment(Guid appointmentId, AppointmentState state, CancellationToken ct);
     }
 }

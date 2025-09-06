@@ -1,4 +1,5 @@
-﻿using Telegram.Bot;
+﻿using BeautyBot.src.BeautyBot.Domain.Entities;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
@@ -6,6 +7,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
     public interface IScenario
     {
         bool CanHandle(ScenarioType scenario);
-        Task<ScenarioResponse> HandleMessageAsync(ITelegramBotClient bot, ScenarioContext context, Update update, CancellationToken ct);
+        Task<ScenarioResponse> HandleMessageAsync(ScenarioContext context, MessageData messageData, CancellationToken ct);
     }
 }

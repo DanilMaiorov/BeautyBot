@@ -173,7 +173,6 @@ namespace BeautyBot.src
             return (inputLower, month, date);
         }
 
-
         public static bool ParseTimeFromString(string timeString)
         {
             return TimeOnly.TryParse(timeString, out _);
@@ -286,38 +285,34 @@ namespace BeautyBot.src
         /// <param name="userService">Сервис для получения информации о пользователе, если он отсутствует в контексте.</param>
         /// <param name="ct">Токен отмены операции.</param>
         /// <returns>
-        /// Кортеж, содержащий:
+        /// Объект типа MessageData, содержащий:
         /// <list type="bullet">
         ///     <item><term>Chat?</term><description>Объект чата, откуда пришло сообщение/колбэк (может быть null).</description></item>
         ///     <item><term>string?</term><description>Текстовый ввод пользователя (может быть null).</description></item>
         ///     <item><term>BeautyBotUser?</term><description>Объект пользователя (может быть null, если не найден).</description></item>
         /// </list>
-        /// Возвращает кортеж из всех null-значений, если обновление не содержит сообщения или колбэка.
+        /// Возвращает null, если обновление не содержит сообщения или колбэка.
         /// </returns>
-        public static async Task<(Chat?, string?, int, BeautyBotUser?)> HandleMessageAsyncGetData(Update update, IUserService userService, CancellationToken ct)
+        public static async Task<MessageData?> HandleMessageAsyncGetData(Update update, IUserService userService, CancellationToken ct)
         {
             if (update.Message != null)
-            {
-                return (
+                return new MessageData(
                     update.Message.Chat,
                     update.Message.Text?.Trim(),
                     update.Message.Id,
                     await userService.GetUser(update.Message.From.Id, ct)
                     );
-            }
+
             else if (update.CallbackQuery != null)
-            {
-                return (
+                return new MessageData(
                     update.CallbackQuery.Message.Chat,
                     update.CallbackQuery.Data?.Trim(),
                     update.CallbackQuery.Message.Id,
                     await userService.GetUser(update.CallbackQuery.From.Id, ct)
                     );
-            }
+
             else
-            {
-                return (null, null, 0, null);
-            }
+                return null;
         }
 
         /// <summary>

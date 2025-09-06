@@ -55,6 +55,8 @@ namespace BeautyBot
             IUserService _userService = new UserService(userRepository);
             ISlotService _slotService = new SlotService(slotRepository);
 
+            IMessageService _messageService = new MessageService(botClient);
+
             PostgreSqlProcedureRepository procedureRepository = new PostgreSqlProcedureRepository(factory);
 
             //Задача написать фичу, которая продлевает количество слотов
@@ -69,7 +71,7 @@ namespace BeautyBot
             IScenarioContextRepository _contextRepository = new InMemoryScenarioContextRepository();
             IEnumerable<IScenario> _scenarios = new List<IScenario>
             {
-                new AddAppointmentScenario(_userService, _appointmentService, _slotService, procedureRepository),
+                new AddAppointmentScenario(_appointmentService, _slotService, procedureRepository),
             };
 
             IUpdateHandler _updateHandler = new UpdateHandler(
@@ -78,6 +80,8 @@ namespace BeautyBot
                 procedureRepository,
 
                 _slotService,
+
+                _messageService,
 
                 _scenarios,
                 _contextRepository,
