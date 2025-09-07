@@ -22,15 +22,15 @@ namespace BeautyBot.src
                     : new ClassicPedicure(Constants.ClassicPedicure, Prices.ClassicManicure, PedicureType.Classic, 60),
             };
 
-        public static IProcedure CreateProcedure(string procedureName, string currentStepProcedure)
+        public static IProcedure CreateProcedure(string procedureSubtype, string baseProcedure)
         {
-            if (string.IsNullOrWhiteSpace(procedureName))
-                throw new ArgumentException("Procedure name cannot be empty", nameof(procedureName));
+            if (string.IsNullOrWhiteSpace(procedureSubtype))
+                throw new ArgumentException("Procedure name cannot be empty", nameof(procedureSubtype));
 
-            if (_procedureCreators.TryGetValue(procedureName, out var creator))
-                return creator(currentStepProcedure);
+            if (_procedureCreators.TryGetValue(procedureSubtype, out var creator))
+                return creator(baseProcedure);
 
-            throw new ArgumentException($"Unknown procedure: {procedureName}", nameof(procedureName));
+            throw new ArgumentException($"Unknown procedure: {procedureSubtype}", nameof(procedureSubtype));
         }
     }
 }
