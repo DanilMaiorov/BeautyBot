@@ -8,7 +8,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers
     {
         public static IProcedure MapFromModel(ProcedureModel model)
         {
-            var procedureEntity = ProcedureFactory.CreateProcedure(model.Subtype, model.Subtype);
+            var procedureEntity = ProcedureFactory.CreateProcedure(model.Subtype, model.Type);
             procedureEntity.Id = model.Id;
             return procedureEntity;
         }

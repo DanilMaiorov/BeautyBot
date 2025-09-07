@@ -336,10 +336,10 @@ namespace BeautyBot.src
         public static string GetBaseProcedureName(object procedureType)
         {
             if (procedureType is Manicure)
-                return "Manicure";
+                return Constants.Manicure;
             
             if (procedureType is Pedicure)
-                return "Pedicure";
+                return Constants.Pedicure;
             
             throw new Exception("Неизвестный тип процедуры");
         }
