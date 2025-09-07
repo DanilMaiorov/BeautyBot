@@ -23,14 +23,14 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         public const string ChooseManicure = "Выберите маникюр";
         public const string ChoosePedicure = "Выберите педикюр";
 
-        public const string FrenchManicure = "Маникюр френч";
-        public const string FrenchPedicure = "Педикюр френч";
+        public const string FrenchManicure = "френч";
+        public const string FrenchPedicure = "френч";
 
-        public const string GelPolishManicure = "Маникюр гель-лак";
-        public const string GelPolishPedicure = "Педикюр гель-лак";
+        public const string GelPolishManicure = "гель-лак";
+        public const string GelPolishPedicure = "гель-лак";
 
-        public const string ClassicManicure = "Класссический маникюр";
-        public const string ClassicPedicure = "Класссический педикюр";
+        public const string ClassicManicure = "классический";
+        public const string ClassicPedicure = "классический";
         //public const string Back = "Назад";
         //public const string Back = "Назад";
         //public const string Back = "Назад";

@@ -2,12 +2,8 @@
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
-using System;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
-using static LinqToDB.Reflection.Methods.LinqToDB.Insert;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 {

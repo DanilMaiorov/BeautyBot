@@ -4,7 +4,6 @@ using BeautyBot.src.BeautyBot.Core.Enums;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using LinqToDB;
-using System.Security.AccessControl;
 
 namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 {
@@ -18,10 +17,6 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
             _factory = factory;
         }
 
-
-        private readonly List<Appointment> _appointments = new List<Appointment>();
-
-
         public async Task Add(Appointment appointment, CancellationToken ct)
         {
             using var dbContext = _factory.CreateDataContext();
@@ -31,68 +26,89 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
         public async Task<IReadOnlyList<Appointment>> GetAllAppointmentsByUserId(Guid userId, CancellationToken ct)
         {
-            var result = _appointments
+            if (userId == Guid.Empty)
+                return new List<Appointment>().AsReadOnly();
+
+            using var dbContext = _factory.CreateDataContext();
+
+            var appointmentModels = await dbContext.Appointments
                 .Where(x => x.User.UserId == userId)
-                .ToList()
-                .AsReadOnly();
+                .LoadWith(i => i.User)
+                .LoadWith(i => i.Procedure)
+                .ToListAsync(ct);
 
-            //сделаю искусственную задержку для асинхронности
-            await Task.Delay(1, ct);
+            var с = AppointmentModelMapper.MapFromModel(appointmentModels[0]);
 
-            return result;
+            var appointmentEntities = appointmentModels.Select(AppointmentModelMapper.MapFromModel).ToList();
+
+            return appointmentEntities.ToList().AsReadOnly();
         }        
 
         public async Task<IReadOnlyList<Appointment>> GetActiveAppointmentsByUserId(Guid userId, CancellationToken ct)
         {
             if (userId == Guid.Empty)
-            {
-                return _appointments.AsReadOnly();
-            }
+                return new List<Appointment>().AsReadOnly();
+            
+            using var dbContext = _factory.CreateDataContext();
 
-            var result = _appointments
+            var appointmentModels = await dbContext.Appointments
                 .Where(x => x.User.UserId == userId && x.State == AppointmentState.Active)
-                .ToList()
-                .AsReadOnly();
+                .ToListAsync(ct);
 
-            //сделаю искусственную задержку для асинхронности
-            await Task.Delay(1);
+            var appointmentEntities = appointmentModels.Select(AppointmentModelMapper.MapFromModel).ToList();
 
-            return result;
+            return appointmentEntities.ToList().AsReadOnly();
         }
 
         public async Task<Appointment?> GetAppointment(Guid appointmentId, CancellationToken ct)
         {
-            var item = _appointments.FirstOrDefault(x => x.Id == appointmentId);
+            using var dbContext = _factory.CreateDataContext();
 
-            //сделаю искусственную задержку для асинхронности
-            await Task.Delay(1, ct);
+            var appointmentModel = await dbContext.Appointments
+                .Where(x => x.Id == appointmentId)
+                .LoadWith(i => i.User)
+                .LoadWith(i => i.Procedure)
+                .FirstOrDefaultAsync(ct);
 
-            return item;
+            return AppointmentModelMapper.MapFromModel(appointmentModel);
         }
 
         public async Task UpdateAppointment(Appointment appointment, CancellationToken ct)
         {
-            var updateIndex = _appointments.FindIndex(x => x.Id == appointment.Id);
+            //using var dbContext = _factory.CreateDataContext();
 
-            if (updateIndex != -1)
-            {
-                _appointments[updateIndex] = appointment;
+            //var updateIndex = _appointments.FindIndex(x => x.Id == appointment.Id);
 
-                //сделаю искусственную задержку для асинхронности
-                await Task.Delay(1, ct);
-            }
-            else
-            {
-                throw new KeyNotFoundException($"Запись с номером {appointment.Id} не найдена");
-            }
+            //if (updateIndex != -1)
+            //{
+            //    _appointments[updateIndex] = appointment;
+
+            //    //сделаю искусственную задержку для асинхронности
+            //    await Task.Delay(1, ct);
+            //}
+            //else
+            //{
+            //    throw new KeyNotFoundException($"Запись с номером {appointment.Id} не найдена");
+            //}
         }
 
+        //тут продолжить
         public async Task CancelAppointment(Guid appointmentId, CancellationToken ct)
         {
-            _appointments.RemoveAll(x => x.Id == appointmentId);
+            using var dbContext = _factory.CreateDataContext();
 
-            //сделаю искусственную задержку для асинхронности
-            await Task.Delay(1, ct);
+            var appointmentEntity = await GetAppointment(appointmentId, ct);
+
+            appointmentEntity.Id = default;
+
+            await dbContext.Appointments
+                .Where(x => x.Id == appointmentId)
+                .DeleteAsync(ct);
+
+            await dbContext.Slots
+                .Where(x => x.AppointmentId == appointmentId)
+                .Set(i => i.AppointmentId, () => null)
+                .UpdateAsync(ct);
         }
     }
 }
