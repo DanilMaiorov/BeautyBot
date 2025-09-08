@@ -102,14 +102,14 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
             appointmentEntity.Id = default;
 
-            await dbContext.Appointments
-                .Where(x => x.Id == appointmentId)
-                .DeleteAsync(ct);
-
             await dbContext.Slots
                 .Where(x => x.AppointmentId == appointmentId)
                 .Set(i => i.AppointmentId, () => null)
                 .UpdateAsync(ct);
+
+            await dbContext.Appointments
+                .Where(x => x.Id == appointmentId)
+                .DeleteAsync(ct);
         }
     }
 }

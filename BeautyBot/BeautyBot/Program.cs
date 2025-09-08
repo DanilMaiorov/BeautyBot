@@ -72,6 +72,7 @@ namespace BeautyBot
             IEnumerable<IScenario> _scenarios = new List<IScenario>
             {
                 new AddAppointmentScenario(_appointmentService, _slotService, procedureRepository),
+                new CancelAppointmentScenario(_appointmentService, _slotService, procedureRepository),
             };
 
             IUpdateHandler _updateHandler = new UpdateHandler(

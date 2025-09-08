@@ -3,6 +3,7 @@ using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using BeautyBot.src.BeautyBot.Domain.Services;
+using Telegram.Bot.Types;
 
 namespace BeautyBot.src.BeautyBot.Application.Services
 {
@@ -13,6 +14,11 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         public AppointmentService(IAppointmentRepository appointmentRepository)
         {
             _appointmentRepository = appointmentRepository;
+        }
+
+        public async Task<Appointment> GetAppointment(Guid appointmentId, CancellationToken ct)
+        {
+            return await _appointmentRepository.GetAppointment(appointmentId, ct);
         }
 
         // реализация метода интерфейса Add

@@ -331,9 +331,29 @@ namespace BeautyBot
             };
         }
 
+        public static InlineKeyboardMarkup AppointmentListKeyboard(Appointment appointment)
+        {
+            var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
 
+            //последний ряд кнопок
+            keyboardRows.Add(new[]
+            {
+                InlineKeyboardButton.WithCallbackData(
+                    text: "❌ Отменить", 
+                    callbackData: new AppointmentCallbackDto { Action = "cancel_appointment", AppointmentId = appointment.Id }.ToString()),
+                InlineKeyboardButton.WithCallbackData(
+                    text: "➡️ Перенести", 
+                    callbackData: new AppointmentCallbackDto { Action = "edit_appointment", AppointmentId = appointment.Id }.ToString())
+            });
+            keyboardRows.Add(new[]
+{
+                InlineKeyboardButton.WithCallbackData(
+                    text: "↩️ Назад к списку",
+                    callbackData: new PagedListCallbackDto { Action = "list_appointments", Page = 0 }.ToString())
+            });
 
-
+            return new InlineKeyboardMarkup(keyboardRows);
+        }
 
 
         //public static InlineKeyboardMarkup AppointmentListKeyboard(IReadOnlyList<Appointment> appointments)
@@ -341,28 +361,10 @@ namespace BeautyBot
         //    var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
 
         //    // кнопки записей
-        //    ListInlineButtonGenerate(appointments, keyboardRows, "show");
-
-        //    //последний ряд кнопок
-        //    keyboardRows.Add(new[]
-        //    {
-        //        InlineKeyboardButton.WithCallbackData(text: "❌ Отменить", callbackData: "cancelappointment"),
-        //        InlineKeyboardButton.WithCallbackData(text: "➡️ Перенести", callbackData: "editappointment")
-        //    });
+        //    ListInlineButtonGenerate(appointments, keyboardRows, "show_ap");
 
         //    return new InlineKeyboardMarkup(keyboardRows);
         //}
-
-
-        public static InlineKeyboardMarkup AppointmentListKeyboard(IReadOnlyList<Appointment> appointments)
-        {
-            var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
-
-            // кнопки записей
-            ListInlineButtonGenerate(appointments, keyboardRows, "show");
-
-            return new InlineKeyboardMarkup(keyboardRows);
-        }
 
         /// <summary>
         /// Генерирует кнопки с записями
@@ -384,5 +386,80 @@ namespace BeautyBot
         }
 
 
+
+        public static void GetAppointmentListKeyboardWithPagination(
+            IEnumerable<KeyValuePair<string, string>> items,
+            List<IEnumerable<InlineKeyboardButton>> keyboardRows,
+            PagedListCallbackDto listDto,
+            int totalPages)
+        {
+            keyboardRows.AddRange(items.Select(item =>
+            {
+                Guid.TryParse(item.Key, out var id);
+                return new[]
+                {
+                InlineKeyboardButton.WithCallbackData(
+                    text: item.Value,
+                    callbackData: new AppointmentCallbackDto { Action = "show_ap", AppointmentId = id }.ToString()
+                )
+            };
+            }));
+
+            //логика кнопок пагинации
+            var paginationButtons = new List<InlineKeyboardButton>();
+
+            //логика кнопки "Назад"
+            if (listDto.Page > 0)
+            {
+                paginationButtons.Add(
+                    InlineKeyboardButton.WithCallbackData(
+                        text: "⬅️",
+                        // Правильно ссылаемся на предыдущую страницу.
+                        callbackData: new PagedListCallbackDto { Action = "list_appointments", Page = listDto.Page - 1 }.ToString()
+                    )
+                );
+            }
+
+            //логика номера текущей страницы для контекста
+            paginationButtons.Add(
+                InlineKeyboardButton.WithCallbackData(
+                    text: $"{listDto.Page + 1}/{totalPages}",
+                    callbackData: "no_action" // Кнопка, которая не делает ничего при нажатии.
+                )
+            );
+
+            //логика кнопки "Вперёд"
+            if (listDto.Page < totalPages - 1)
+            {
+                paginationButtons.Add(
+                    InlineKeyboardButton.WithCallbackData(
+                        text: "➡️",
+                        // Правильно ссылаемся на следующую страницу.
+                        callbackData: new PagedListCallbackDto { Action = "list_appointments", Page = listDto.Page + 1 }.ToString()
+                    )
+                );
+            }
+
+            //логика кнопок пагинации, добавляем их в новый ряд
+            if (paginationButtons.Any())
+                keyboardRows.Add(paginationButtons.ToArray());
+        }
+
+
+        //метод клавиатуры подтверждения удаления списка
+        public static InlineKeyboardMarkup GetApproveCancelAppointmentKeyboard()
+        {
+            //первый ряд
+            var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
+
+            //последний ряд кнопок
+            keyboardRows.Add(new[]
+            {
+                InlineKeyboardButton.WithCallbackData(text: "✅ Да", callbackData: "approve_cancel"),
+                InlineKeyboardButton.WithCallbackData(text: "❌ Нет", callbackData: "decline_cancel")
+            });
+
+            return new InlineKeyboardMarkup(keyboardRows);
+        }
     }
 }

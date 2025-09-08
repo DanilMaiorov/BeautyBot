@@ -11,6 +11,8 @@ using Telegram.Bot.Types.ReplyMarkups;
 using System;
 using BeautyBot.src.BeautyBot.TelegramBot.Dtos;
 using BeautyBot.src.BeautyBot.Core.Interfaces;
+using NailBot.Helpers;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -33,6 +35,10 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         //добавлю 2 события
         public event MessageEventHandler OnHandleUpdateStarted;
         public event MessageEventHandler OnHandleUpdateCompleted;
+
+
+        //количество кнопок задач на 1 странице
+        int _pageSize = 5;
 
         public UpdateHandler(
             IUserService userService,
@@ -60,7 +66,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         {
             if (update.Message != null)
             {
-                
                 await OnMessage(update, ct);
             }
             else if (update.CallbackQuery != null)
@@ -161,7 +166,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                     break;
 
                 case Command.Show:
-                    await HandleShowAppointmentsCommand(messageData.User.UserId, messageData.Chat, _ct);
+                    await HandleShowAppointmentsCommand(messageData.User.UserId, messageData.Chat, messageData.MessageId, _ct);
                     break;
 
                 case Command.UpdateAppointment:
@@ -235,15 +240,30 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
             var callbackDto = CallbackDto.FromString(messageData.UserInput);
 
-
             //парсинг команды
             Command command = Helper.GetEnumValueOrDefault<Command>(inputCommand);
 
             //обработка основных команд
             switch (callbackDto.Action)
             {
+                case "list_appointments":
+                    await HandleShowAppointmentsList(messageData, ct);
+                    break;
+
+                case "show_ap":
+                    await HandleShowAppointmentDetails(messageData, ct);
+                    break;
+
                 case "cancel_appointment":
-                    Console.WriteLine("тут будет обработка отмены");
+                    await HandleCancelAppointmentCommand(messageData, ct);
+                    break;
+
+                case "approve_cancel":
+                    await HandleApproveCancelAppointmentCommand(messageData, context, ct);
+                    break;
+
+                case "decline_cancel":
+                    await HandleDeclineCancelAppointmentCommand(messageData, ct);
                     break;
 
                 case "edit_appointment":
@@ -254,7 +274,8 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 case "month_display_no_action":
                 case "day_name_no_action":
                 case "day_unavailable":
-                    Console.WriteLine("Не активные кнопки календаря");
+                case "no_action":
+                    Console.WriteLine("Не активные кнопки календаря или пагинации");
                     break;
 
                 case "day_selected":
@@ -278,8 +299,16 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                         messageData.User != null ? Keyboards.firstStep : Keyboards.start,
                         ct);
                     break;
-
             }
+        }
+        private async Task<IReadOnlyList<KeyValuePair<string, string>>> GetKeyValuePairAppointmentsCollection(Guid userId, CancellationToken ct)
+        {
+            var appointments = await _appointmentService.GetUserActiveAppointmentsByUserId(userId, ct);
+
+            return appointments
+                .ToReadOnlyKeyValueList(
+                    item => item.Id.ToString(),
+                    item => $"{Helper.GetRussianSubtypeName(item.Procedure)} {item.AppointmentDate.ToString("dd.MM")} в {item.AppointmentDate.ToString("HH:mm")}");
         }
 
         #endregion
@@ -439,9 +468,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             if (context.CurrentStep == "DateProcedure" && context.DataHistory?.Count == 3)
                 context.CurrentStep = "TypeProcedure";
 
-            //if (context.CurrentStep == "DateProcedure")
-            //    context.CurrentStep = "BaseProcedure";
-
             if (context.CurrentStep == "TypeProcedure" && context.DataHistory?.Count == 2)
                 context.CurrentStep = "BaseProcedure";
 
@@ -468,9 +494,9 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 ct);
         }
 
-        private async Task HandleShowAppointmentsCommand(Guid userId, Chat chat, CancellationToken ct)
+        private async Task HandleShowAppointmentsCommand(Guid userId, Chat chat, int messageId, CancellationToken ct)
         {
-            var appointmentsList = await _appointmentService.GetUserActiveAppointmentsByUserId(userId, ct);
+            var appointmentsList = await GetKeyValuePairAppointmentsCollection(userId, ct);
 
             if (appointmentsList.Count == 0)
             {
@@ -479,8 +505,50 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
                 return;
             }
 
-            await _messageService.SendMessage(chat, "Список активных записей:", Keyboards.AppointmentListKeyboard(appointmentsList), ct);
+            var pagedListDto = new PagedListCallbackDto { Action = "list_appointments", Page = 0 };
+
+            var pagedKeyboard = await BuildPagedAppointmentButtons(appointmentsList, pagedListDto);
+
+            await _messageService.SendMessage(chat, "Список активных записей:", pagedKeyboard, ct);
         }
+
+
+        private async Task<InlineKeyboardMarkup> BuildPagedAppointmentButtons(IReadOnlyList<KeyValuePair<string, string>> callbackData, PagedListCallbackDto listDto)
+        {
+            var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
+
+            var totalPages = (int)Math.Ceiling(((double)callbackData.Count / _pageSize));
+
+            var currentPageTasks = callbackData.GetBatchByNumber(_pageSize, listDto.Page);
+
+            Keyboards.GetAppointmentListKeyboardWithPagination(currentPageTasks, keyboardRows, listDto, totalPages);
+
+            return new InlineKeyboardMarkup(keyboardRows);
+        }
+        private async Task HandleShowAppointmentDetails(MessageData messageData, CancellationToken ct)
+        {
+            var appointmentDto = AppointmentCallbackDto.FromString(messageData.UserInput);
+
+            if (appointmentDto.AppointmentId == null)
+                throw new Exception("Беда с id записи");
+            
+            var appointment = await _appointmentService.GetAppointment(appointmentDto.AppointmentId, ct);
+
+            if (appointment != null)
+            {
+                var detailsMessage = $"Детали записи:\n" +
+                                        $"Процедура: {Helper.GetRussianSubtypeName(appointment.Procedure)}\n" +
+                                        $"Дата: {appointment.AppointmentDate.ToString("dd.MM.yyyy")}\n" +
+                                        $"Время: {appointment.AppointmentDate.ToString("HH:mm")}";
+
+                await _messageService.EditMessageText(messageData.Chat, messageData.MessageId, detailsMessage, Keyboards.AppointmentListKeyboard(appointment), ct);
+            }
+        }
+
+
+
+
+
 
 
         private async Task HandleHelpCommand(Chat chat, BeautyBotUser user, CancellationToken ct)
@@ -585,6 +653,66 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             }
             return;
         }
+
+        private async Task HandleShowAppointmentsList(MessageData messageData, CancellationToken ct)
+        {
+            var pagedListDto = PagedListCallbackDto.FromString(messageData.UserInput);
+
+            var activeAppointments = await GetKeyValuePairAppointmentsCollection(messageData.User.UserId, ct);
+
+            var pagedKeyboard = await BuildPagedAppointmentButtons(activeAppointments, pagedListDto);
+
+            await _messageService.EditMessageText(messageData.Chat, messageData.MessageId, "Список активных записей:", pagedKeyboard, ct);
+        }
+
+        private async Task HandleCancelAppointmentCommand(MessageData messageData, CancellationToken ct)
+        {
+            var appointmentDto = AppointmentCallbackDto.FromString(messageData.UserInput);
+
+            if (appointmentDto.AppointmentId == null)
+                throw new Exception("Беда с id записи");
+
+            var appointment = await _appointmentService.GetAppointment(appointmentDto.AppointmentId, ct);
+
+            var cancelContext = Helper.CreateScenarioContext(ScenarioType.CancelAppointment, messageData.TelegramUserId);
+
+            cancelContext.Data["Appointment"] = appointment;
+
+            await ProcessScenario(cancelContext, messageData, ct);
+        }
+
+        private async Task HandleApproveCancelAppointmentCommand(MessageData messageData, ScenarioContext context, CancellationToken ct)
+        {
+            if (!context.Data.TryGetValue("Appointment", out var appointment))
+                throw new ArgumentException("Отменяемой записи - нет в контексте");
+
+            if (appointment is not Appointment appointmentObj)
+                throw new ArgumentException("Отменяемая запись - не запись");
+
+            await _appointmentService.CancelAppointment(appointmentObj.Id, ct);
+            
+            await ProcessScenario(context, messageData, ct);
+        }
+
+        private async Task HandleDeclineCancelAppointmentCommand(MessageData messageData, CancellationToken ct)
+        {
+            await _scenarioContextRepository.ResetContext(messageData.TelegramUserId, ct);
+
+            await _messageService.DeleteMessage(messageData.Chat, messageData.MessageId - 1, ct);
+
+            await _messageService.SendMessage(messageData.Chat, "Будем с нетерпением ждать вас!\n Вы в главном меню. Что хотите сделать?\n", Keyboards.firstStep, ct);
+
+            return;
+        }
+
+
+
+
+
+
+
+
+
         #endregion
 
         public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken ct)

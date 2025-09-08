@@ -151,9 +151,11 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
         {
             context.CurrentStep = "ApproveTimeProcedure";
 
+            var time = (TimeOnly)context.Data["TimeProcedure"];
+
             return new ScenarioResponse(ScenarioResult.Transition, chat)
             {
-                Message = $"Выбранное время - {(string)context.Data["TimeProcedure"]}\n\nВерно?",
+                Message = $"Выбранное время - {time.ToString("HH:mm")}\n\nВерно?",
                 Keyboard = Keyboards.approveTime
             };
         }

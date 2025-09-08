@@ -42,5 +42,10 @@ namespace BeautyBot.src.BeautyBot.Application.Services
         {
             await _botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: keyboard, cancellationToken: ct);
         }
+
+        public async Task EditMessageText(Chat chat, int messageId, string text, InlineKeyboardMarkup keyboard, CancellationToken ct)
+        {
+            await _botClient.EditMessageText(chat, messageId, text, replyMarkup: keyboard, cancellationToken: ct);
+        }
     }
 }

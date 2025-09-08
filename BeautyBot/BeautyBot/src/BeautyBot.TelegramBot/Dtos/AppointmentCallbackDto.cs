@@ -2,7 +2,7 @@
 {
     public class AppointmentCallbackDto : CallbackDto
     {
-        public Guid? AppointmentId { get; set; }
+        public Guid AppointmentId { get; set; }
 
         public static new AppointmentCallbackDto FromString(string input)
         {
@@ -10,7 +10,7 @@
             return new AppointmentCallbackDto
             {
                 Action = parts[0],
-                AppointmentId = parts.Length > 1 && Guid.TryParse(parts[1], out var id) ? id : null
+                AppointmentId = parts.Length > 1 && Guid.TryParse(parts[1], out var id) ? id : Guid.Empty,
             };
         }
 
