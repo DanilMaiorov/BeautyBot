@@ -9,6 +9,8 @@ using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
 using Telegram.Bot.Types.ReplyMarkups;
 using System;
+using BeautyBot.src.BeautyBot.TelegramBot.Dtos;
+using BeautyBot.src.BeautyBot.Core.Interfaces;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 {
@@ -58,6 +60,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         {
             if (update.Message != null)
             {
+                
                 await OnMessage(update, ct);
             }
             else if (update.CallbackQuery != null)
@@ -87,21 +90,12 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                 OnHandleUpdateStarted?.Invoke(eventMessage);
 
+                //получение сценария
                 var scenarioContext = await _scenarioContextRepository.GetContext(messageData.TelegramUserId, ct);
 
-                (bool isHandled, ScenarioContext updatedContext) = await TryHandleOnMessageCommandAsync(update.Message, messageData, scenarioContext, ct);
+                await TryHandleOnMessageCommandAsync(update.Message, messageData, scenarioContext, ct);
 
                 OnHandleUpdateCompleted?.Invoke(eventMessage);
-
-                if (!isHandled)
-                    return;
-
-                if (scenarioContext != null)
-                {
-                    await ProcessScenario(scenarioContext, messageData, ct);
-
-                    return;
-                }
             }
             catch (Exception)
             {
@@ -111,6 +105,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
         private async Task OnCallbackQuery(Update update, CancellationToken ct)
         {
+            //получение данных сообщения
             var messageData = await Helper.HandleMessageAsyncGetData(update, _userService, ct);
 
             string eventMessage = messageData.UserInput;
@@ -125,20 +120,13 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
 
                 OnHandleUpdateStarted?.Invoke(eventMessage);
 
+                //получение сценария
                 var scenarioContext = await _scenarioContextRepository.GetContext(messageData.TelegramUserId, ct);
 
-                var isHandled = await TryHandleCallbackCommandAsync(messageData, scenarioContext, ct);
+                //метод обработки сообщения 
+                await TryHandleCallbackCommandAsync(messageData, scenarioContext, ct);
 
-                OnHandleUpdateCompleted?.Invoke(eventMessage);
-
-                if (!isHandled)
-                    return;                
-
-                if (scenarioContext != null)
-                {
-                    await ProcessScenario(scenarioContext, messageData, ct);
-                    return;
-                }
+                OnHandleUpdateCompleted?.Invoke(eventMessage);           
             }
             catch (Exception)
             {
@@ -146,7 +134,157 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             }
         }
 
-        #region МЕТОДЫ КОМАНД
+        #region МЕТОДЫ ОБРАБОТЧИКИ КОМАНД
+
+        private async Task TryHandleOnMessageCommandAsync(Message updateMessage, MessageData messageData, ScenarioContext context, CancellationToken ct)
+        {
+            (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.NormalizeInput(messageData.UserInput);
+
+            inputCommand = inputCommand.Replace("/", string.Empty);
+
+            //парсинг команды
+            Command command = Helper.GetEnumValueOrDefault<Command>(inputCommand);
+
+            //обработка основных команд 
+            switch (command)
+            {
+                case Command.Start:
+                    await HandleStartCommand(updateMessage, messageData.User, ct);
+                    break;
+
+                case Command.Help:
+                    await HandleHelpCommand(messageData.Chat, messageData.User, _ct);
+                    break;
+
+                case Command.Info:
+                    await HandleInfoCommand(messageData.Chat, _ct);
+                    break;
+
+                case Command.Show:
+                    await HandleShowAppointmentsCommand(messageData.User.UserId, messageData.Chat, _ct);
+                    break;
+
+                case Command.UpdateAppointment:
+                    //await _appointmentService.UpdateAppointment(taskGuid, AppointmentState.Completed, _ct);
+                    break;
+
+                case Command.Manicure:
+                case Command.Pedicure:
+                    await HandleBaseProcedureCommand(messageData, context, ct);
+                    break;
+
+                case Command.Classic:
+                case Command.GelPolish:
+                case Command.French:
+                    await HandleTypeProcedureCommand(messageData, context, ct);
+                    break;
+
+                case Command.Time:
+                    await HandleChooseTimeCommand(messageData, context, ct);
+                    break;
+
+                case Command.Approve:
+                    await ProcessScenario(context, messageData, ct);
+                    break;
+
+                case Command.ChangeDate:
+                    await HandleChangeDateCommand(messageData, context, ct);
+                    break;
+
+                case Command.ChangeTime:
+                    await HandleChangeTimeCommand(messageData, context, ct);
+                    break;
+
+                case Command.FindAppointment:
+                    //await ShowHelp(currentUser);
+                    Console.WriteLine("FindAppointmentFindAppointment");
+                    break;
+
+                case Command.Back:
+                    await HandleBackCommand(messageData, context, messageData.TelegramUserId, ct);
+                    break;
+
+                case Command.Cancel:
+                    //тут надо сделать
+                    await HandleCancelCommand(messageData.Chat, messageData.TelegramUserId, ct);
+                    break;
+
+                case Command.Create:
+                    await HandleCreateCommand(messageData, ct);
+                    break;
+
+                case Command.Exit:
+                    Console.WriteLine("ExitExit");
+                    break;
+
+                default:
+                    await _messageService.SendMessage(
+                        messageData.Chat,
+                        "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n",
+                        messageData.User != null ? Keyboards.firstStep : Keyboards.start,
+                        ct);
+                    break;
+            }
+        }
+
+        private async Task TryHandleCallbackCommandAsync(MessageData messageData, ScenarioContext context, CancellationToken ct)
+        {
+            (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.NormalizeInput(messageData.UserInput);
+
+            inputCommand = inputCommand.Replace("/", string.Empty);
+
+            var callbackDto = CallbackDto.FromString(messageData.UserInput);
+
+
+            //парсинг команды
+            Command command = Helper.GetEnumValueOrDefault<Command>(inputCommand);
+
+            //обработка основных команд
+            switch (callbackDto.Action)
+            {
+                case "cancel_appointment":
+                    Console.WriteLine("тут будет обработка отмены");
+                    break;
+
+                case "edit_appointment":
+                    Console.WriteLine("тут будет обработка изменения");
+                    break;
+
+                case "empty_day":
+                case "month_display_no_action":
+                case "day_name_no_action":
+                case "day_unavailable":
+                    Console.WriteLine("Не активные кнопки календаря");
+                    break;
+
+                case "day_selected":
+                    await HandleDaySelectCommand(context, messageData, ct);
+                    break;
+
+                case "prev_month":
+                case "next_month":
+                    await HandleChangeMonthCommand(context, messageData, chooseMonth, ct);
+                    break;
+
+                case "exit":
+                    //await ShowHelp(currentUser);
+                    Console.WriteLine("ExitExit");
+                    break;
+
+                default:
+                    await _messageService.SendMessage(
+                        messageData.Chat,
+                        "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n",
+                        messageData.User != null ? Keyboards.firstStep : Keyboards.start,
+                        ct);
+                    break;
+
+            }
+        }
+
+        #endregion
+
+        #region МЕТОДЫ ON MESSAGE КОМАНД
         private async Task HandleStartCommand(Message updateMessage, BeautyBotUser user, CancellationToken ct)
         {
             if (user == null)
@@ -160,43 +298,129 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             await _messageService.SendMessage(updateMessage.Chat, $"Спасибо за регистрацию, {(string.IsNullOrEmpty(user.TelegramUserFirstName) ? user.TelegramUserName : user.TelegramUserFirstName)} 🤗", Keyboards.firstStep, ct);
         }
 
-        private async Task HandleChangeDateCommand(Chat chat, ScenarioContext context, int messageId, CancellationToken ct)
+        private async Task HandleChangeDateCommand(MessageData messageData, ScenarioContext context, CancellationToken ct)
         {
-            await _messageService.DeleteMultiMessage(chat, [messageId - 2, messageId - 1], ct);
+            await _messageService.DeleteMultiMessage(messageData.Chat, [messageData.MessageId - 2, messageData.MessageId - 1], ct);
 
             var unavailableSlots = await _slotService.GetUnavailableSlotsByDate(ct);
 
             context.DataHistory.Pop();
 
-            context.CurrentStep = "DateProcedure";
+            context.CurrentStep = "TypeProcedure";
 
-            context.Data[context.CurrentStep] = null;
+            //var messagesToSend = new List<(string messages, ReplyMarkup keyboard)>
+            //{
+            //    ("Выберите другую дату", Keyboards.cancelOrBack),
+            //    ("✖ - означает, что на выбранную дату нет свободных слотов", Keyboards.DaySlotsKeyboard(DateTime.Today, unavailableSlots)),
+            //};
 
-            var messagesToSend = new List<(string messages, ReplyMarkup keyboard)>
-            {
-                ("Выберите другую дату", Keyboards.cancelOrBack),
-                ("✖ - означает, что на выбранную дату нет свободных слотов", Keyboards.DaySlotsKeyboard(DateTime.Today, unavailableSlots)),
-            };
+            //await _messageService.SendMultiMessage(chat, messagesToSend, ct);
 
-            await _messageService.SendMultiMessage(chat, messagesToSend, ct);
+            await ProcessScenario(context, messageData, ct);
+
+
+
+
+            //if (context == null)
+            //    return;
+
+            //await _messageService.DeleteMultiMessage(chat, [messageId - 2, messageId - 1], ct);
+
+            //var unavailableSlots = await _slotService.GetUnavailableSlotsByDate(ct);
+
+            //context.DataHistory.Pop();
+
+            //context.CurrentStep = "TypeProcedure";
+
+
+
+
+            //if (calendarDayCallbackDto.Date == default)
+            //    return false;
+
+            //context.Data["DateProcedure"] = calendarDayCallbackDto.Date;
+
+            //await ProcessScenario(context, messageData, ct);
+
+            //return true;
         }
 
-        private async Task HandleChangeTimeCommand(ScenarioContext context, CancellationToken ct)
+        private async Task HandleBaseProcedureCommand(MessageData messageData, ScenarioContext context, CancellationToken ct)
+        {
+            if (context.DataHistory.Count > 0)
+                messageData.UserInput = context.DataHistory.Pop();
+
+            if (messageData.UserInput != Constants.Manicure && messageData.UserInput != Constants.Pedicure)
+                throw new Exception("Что-то пошло не так");
+
+            context.Data["BaseProcedure"] = messageData.UserInput;
+
+            context.DataHistory.Push(messageData.UserInput);
+
+            context.CurrentStep = "BaseProcedure";
+
+            await ProcessScenario(context, messageData, ct);
+        }
+
+        private async Task HandleTypeProcedureCommand(MessageData messageData, ScenarioContext context, CancellationToken ct)
+        {
+            if (context.DataHistory.Count > 1)
+                messageData.UserInput = context.DataHistory.Pop();
+
+            context.Data.TryGetValue("BaseProcedure", out var procedureBaseType);
+
+            if (procedureBaseType == null)
+                throw new Exception("Что-то пошло не так");
+
+            context.Data.TryGetValue("TypeProcedure", out var procedureSubtype);
+
+            context.DataHistory.Push(messageData.UserInput);
+
+            if (procedureSubtype is IProcedure subtype && subtype != null)
+                procedureSubtype = Helper.GetRussianSubtypeName(subtype);
+            else
+                procedureSubtype = context.DataHistory.Peek();
+
+            context.Data["TypeProcedure"] = ProcedureFactory.CreateProcedure((string)procedureSubtype, (string)procedureBaseType);
+
+            await ProcessScenario(context, messageData, ct);
+        }
+
+        private async Task HandleChooseTimeCommand(MessageData messageData, ScenarioContext context, CancellationToken ct)
+        {
+            if (!TimeOnly.TryParse(messageData.UserInput, out var time))
+                throw new InvalidCastException($"Ожидался TimeOnly, получен {time.GetType().Name ?? "null"}");
+
+            await Task.Delay(1, ct);
+
+            context.DataHistory.Push(time.ToString());
+
+            context.Data["TimeProcedure"] = time;
+
+            await ProcessScenario(context, messageData, ct);
+        }
+
+        private async Task HandleChangeTimeCommand(MessageData messageData, ScenarioContext context, CancellationToken ct)
         {
             context.DataHistory.Pop();
 
             context.CurrentStep = "ApproveDateProcedure";
+
+            await ProcessScenario(context, messageData, ct);
         }
 
-        private async Task<(bool isHandled, ScenarioContext updatedContext)> HandleBackCommand(Chat chat, ScenarioContext context, long telegramUserId, CancellationToken ct)
+        private async Task HandleBackCommand(MessageData messageData, ScenarioContext context, long telegramUserId, CancellationToken ct)
         {
+            if (context == null)
+                return;
+
             if (context.CurrentStep == "BaseProcedure")
             {
                 await _scenarioContextRepository.ResetContext(telegramUserId, ct);
 
-                await _messageService.SendMessage(chat, "Вы в главном меню. Что хотите сделать?\n", Keyboards.firstStep, ct);
+                await _messageService.SendMessage(messageData.Chat, "Вы в главном меню. Что хотите сделать?\n", Keyboards.firstStep, ct);
 
-                return (false, null);
+                return;
             }
             else
             {
@@ -212,63 +436,52 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
             if (context.CurrentStep == "User")
                 context.CurrentStep = null;
 
-            if (context.CurrentStep == "DateProcedure")
+            if (context.CurrentStep == "DateProcedure" && context.DataHistory?.Count == 3)
                 context.CurrentStep = "TypeProcedure";
+
+            //if (context.CurrentStep == "DateProcedure")
+            //    context.CurrentStep = "BaseProcedure";
+
+            if (context.CurrentStep == "TypeProcedure" && context.DataHistory?.Count == 2)
+                context.CurrentStep = "BaseProcedure";
 
             if (context.DataHistory?.Count > 0)
                 context.DataHistory.Pop();
 
-            return (true, context);
+            await ProcessScenario(context, messageData, ct);
         }
 
-        private async Task<(bool isHandled, ScenarioContext updatedContext)> HandleCancelCommand(Chat chat, long telegramUserId, CancellationToken ct)
+        private async Task HandleCancelCommand(Chat chat, long telegramUserId, CancellationToken ct)
         {
             await _scenarioContextRepository.ResetContext(telegramUserId, ct);
 
             await _messageService.SendMessage(chat, "Создание записи отменено. Вы в главном меню. Что хотите сделать?\n", Keyboards.firstStep, ct);
 
-            return (false, null);
+            return;
         }
         
-        private async Task<(bool isHandled, ScenarioContext updatedContext)> HandleCreateCommand(ScenarioContext context, MessageData messageData, CancellationToken ct)
+        private async Task HandleCreateCommand(MessageData messageData, CancellationToken ct)
         {
             await ProcessScenario(
                 Helper.CreateScenarioContext(ScenarioType.AddAppointment, messageData.TelegramUserId),
                 messageData,
                 ct);
-
-            return (true, context);
         }
 
-        private async Task HandleShowAppointmentsCommand(
-            Guid userId, 
-            Chat chat, 
-            CancellationToken ct, 
-            bool isActive = false, 
-            IReadOnlyList<Appointment>? appointments = null)
+        private async Task HandleShowAppointmentsCommand(Guid userId, Chat chat, CancellationToken ct)
         {
-
-            //var currentUserTaskList = currentUser != null
-            //? await _appointmentService.GetUserAppointmentsByUserId(currentUser.UserId, _ct)
-            //: null;
-            var appointmentsList = appointments ?? (isActive
-                ? await _appointmentService.GetUserAppointmentsByUserId(userId, ct)
-                : await _appointmentService.GetUserActiveAppointmentsByUserId(userId, ct));
+            var appointmentsList = await _appointmentService.GetUserActiveAppointmentsByUserId(userId, ct);
 
             if (appointmentsList.Count == 0)
             {
-                string emptyMessage = isActive ? "Список записей пуст.\n" : "Aктивных записей нет";
+                string emptyMessage = "Вы ещё никуда не записаны";
                 await _messageService.SendMessage(chat, emptyMessage, Keyboards.firstStep, ct);
                 return;
             }
 
-            string message = appointments != null ? "Список найденных записей:"
-                : (isActive ? "Список всех записей:" : "Список активных записей:");
-
-            await _messageService.SendMessage(chat, message, Keyboards.firstStep, ct);
-
-            //await Helper.AppointmentsListRender(appointmentsList, botClient, currentChat, ct);
+            await _messageService.SendMessage(chat, "Список активных записей:", Keyboards.AppointmentListKeyboard(appointmentsList), ct);
         }
+
 
         private async Task HandleHelpCommand(Chat chat, BeautyBotUser user, CancellationToken ct)
         {
@@ -321,7 +534,7 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         {
             var scenario = GetScenario(context.CurrentScenario);
 
-            var scenarioResponse = await scenario.HandleMessageAsync(context, messageData, ct);
+            var scenarioResponse = await scenario.HandleMessageAsync(context, messageData.User, messageData.Chat, ct);
 
             context.LastResponse = scenarioResponse;
 
@@ -339,164 +552,40 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.UpdateHandlers
         }
         #endregion
 
-        #region МЕТОДЫ ОБРАБОТЧИКИ КОМАНД
 
-        private async Task<(bool isHandled, ScenarioContext updatedContext)> TryHandleOnMessageCommandAsync(Message updateMessage, MessageData messageData, ScenarioContext context, CancellationToken ct)
+
+        #region МЕТОДЫ CALLBACK QUERY КОМАНД
+        private async Task HandleDaySelectCommand(ScenarioContext context, MessageData messageData, CancellationToken ct)
         {
-            (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(messageData.UserInput);
+            if (context == null)
+                return;
 
-            inputCommand = inputCommand.Replace("/", string.Empty); 
+            var calendarDayCallbackDto = CalendarDayCallbackDto.FromString(messageData.UserInput);
 
-            //парсинг команды
-            Command command = Helper.GetEnumValueOrDefault<Command>(inputCommand); 
+            if (calendarDayCallbackDto.Date == default)
+                return;
 
-            //обработка основных команд 
-            switch (command)
-            {
-                case Command.Start:
-                    await HandleStartCommand(updateMessage, messageData.User, ct);
-                    break;
+            context.Data["DateProcedure"] = calendarDayCallbackDto.Date;
 
-                case Command.Help:
-                    await HandleHelpCommand(messageData.Chat, messageData.User, _ct);
-                    break;
-
-                case Command.Info:
-                    await HandleInfoCommand(messageData.Chat, _ct);
-                    break;
-
-                case Command.Show:
-                    await HandleShowAppointmentsCommand(messageData.User.UserId, messageData.Chat, _ct, true);
-                    break;
-
-                case Command.CancelAppointment:
-                    //await ShowHelp(currentUser);
-                    Console.WriteLine("CancelAppointment");
-                    break;
-
-                case Command.EditAppointment:
-                    //await ShowHelp(currentUser);
-                    Console.WriteLine("EditAppointmentEditAppointment");
-                    break;
-
-                case Command.UpdateAppointment:
-                    //await _appointmentService.UpdateAppointment(taskGuid, AppointmentState.Completed, _ct);
-                    break;
-
-                case Command.Manicure:
-                case Command.Pedicure:
-                case Command.Classic:
-                case Command.GelPolish:
-                case Command.French:
-                case Command.Time:
-                case Command.Approve:
-                    return (true, context);
-
-
-                case Command.ChangeDate:
-                    await HandleChangeDateCommand(messageData.Chat, context, messageData.MessageId, ct);
-                    break;
-
-                case Command.ChangeTime:
-                    await HandleChangeTimeCommand(context, ct);
-                    break;
-
-
-                case Command.FindAppointment:
-                    //await ShowHelp(currentUser);
-                    Console.WriteLine("FindAppointmentFindAppointment");
-                    break;
-
-                case Command.Back:
-                    return await HandleBackCommand(messageData.Chat, context, messageData.TelegramUserId, ct);
-
-                case Command.Cancel:
-                    return await HandleCancelCommand(messageData.Chat, messageData.TelegramUserId, ct);
-
-                case Command.Create:
-                    return await HandleCreateCommand(context, messageData, ct);
-
-
-                case Command.Exit:
-                    Console.WriteLine("ExitExit");
-                    break;
-
-                default:
-                    await _messageService.SendMessage(
-                        messageData.Chat, 
-                        "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n",
-                        messageData.User != null ? Keyboards.firstStep : Keyboards.start,
-                        ct);
-
-                    return (false, context);
-            }
-            return (true, context);
+            await ProcessScenario(context, messageData, ct);
         }
 
-
-        private async Task<bool> TryHandleCallbackCommandAsync(MessageData messageData, ScenarioContext context, CancellationToken ct)
+        private async Task HandleChangeMonthCommand(ScenarioContext context, MessageData messageData, string chooseMonth, CancellationToken ct)
         {
-            (string inputCommand, string chooseMonth, DateOnly chooseDate) = Helper.InputCheck(messageData.UserInput);
+            if (context == null)
+                return;
 
-            inputCommand = inputCommand.Replace("/", string.Empty);
+            var calendarMonthCallbackDto = CalendarMonthCallbackDto.FromString(messageData.UserInput);
 
-            //парсинг команды
-            Command command = Helper.GetEnumValueOrDefault<Command>(inputCommand);
-
-            //обработка основных команд
-            switch (command)
+            if (DateTime.TryParseExact(calendarMonthCallbackDto.Month, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth))
             {
-                case Command.CancelAppointment:
-                    Console.WriteLine("CancelAppointment");
+                var unavailableSlots = await _slotService.GetUnavailableSlotsByDate(ct);
 
-                    //var currentUserAppointmentsList = currentUser != null
-                    //? await _appointmentService.GetUserAppointmentsByUserId(currentUser.UserId, _ct)
-                    //: null;
-                    break;
-
-                case Command.EditAppointment:
-                    //await ShowHelp(currentUser);
-                    Console.WriteLine("EditAppointmentEditAppointment");
-                    break;
-
-                case Command.Date:
-                    return context != null && context.CurrentStep == "DateProcedure";
-
-                case Command.ChangeMonth:
-                    if (DateTime.TryParseExact(chooseMonth, "MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime newDisplayMonth) && context != null)
-                    {
-                        var unavailableSlots = await _slotService.GetUnavailableSlotsByDate(ct);
-
-                        //await botClient.EditMessageReplyMarkup(chat, messageId, replyMarkup: Keyboards.DaySlotsKeyboard(newDisplayMonth, unavailableSlots), cancellationToken: _ct);
-
-                        await _messageService.EditMessage(messageData.Chat, messageData.MessageId, Keyboards.DaySlotsKeyboard(newDisplayMonth, unavailableSlots), ct);
-                    }
-                    return false;
-
-                case Command.Exit:
-                    //await ShowHelp(currentUser);
-                    Console.WriteLine("ExitExit");
-                    break;
-
-                default:
-                    await _messageService.SendMessage(
-                        messageData.Chat,
-                        "Ошибка: введена некорректная команда. Пожалуйста, введите команду заново.\n",
-                        messageData.User != null ? Keyboards.firstStep : Keyboards.start,
-                        ct);
-
-                    return false;
+                await _messageService.EditMessage(messageData.Chat, messageData.MessageId, Keyboards.DaySlotsKeyboard(newDisplayMonth, unavailableSlots), ct);
             }
-            return true;
+            return;
         }
-
         #endregion
-
-
-
-
-
-
 
         public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken ct)
         {

@@ -1,4 +1,6 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Entities;
+﻿using BeautyBot.src;
+using BeautyBot.src.BeautyBot.Domain.Entities;
+using BeautyBot.src.BeautyBot.TelegramBot.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -6,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BeautyBot
 {
@@ -158,9 +161,9 @@ namespace BeautyBot
             DateTime maxDate,
             List<DateOnly> unavailableDays)
         {
-            string PrevMonthCallback = "prev_month_";
-            string NextMonthCallback = "next_month_";
-            string DaySelectedCallback = "day_selected_";
+            string PrevMonthCallback = "prev_month";
+            string NextMonthCallback = "next_month";
+            string DaySelectedCallback = "day_selected";
 
             var keyboardButtons = new List<List<InlineKeyboardButton>>();
 
@@ -169,8 +172,8 @@ namespace BeautyBot
             for (int i = 0; i < 7; i++)
             {
                 dayNamesRow.Add(InlineKeyboardButton.WithCallbackData(
-                    CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames[(i + (int)DayOfWeek.Monday) % 7], // Start from Monday
-                    "day_name_no_action" // No action for day names
+                    text: CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames[(i + (int)DayOfWeek.Monday) % 7], // Start from Monday
+                    callbackData: new CalendarDayCallbackDto { Action = "day_name_no_action", Date = default}.ToString() // No action for day names
                 ));
             }
             keyboardButtons.Add(dayNamesRow);
@@ -186,7 +189,11 @@ namespace BeautyBot
 
             // Add empty buttons for the days before the first day of the month
             for (int i = 0; i < offset; i++)
-                currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
+                currentRow.Add(InlineKeyboardButton.WithCallbackData(
+                    text: " ",
+                    callbackData: new CalendarDayCallbackDto { Action = "empty_day", Date = default }.ToString()
+                ));
+            
 
             for (int day = 1; day <= daysInMonth; day++)
             {
@@ -199,13 +206,19 @@ namespace BeautyBot
                 if (isDayValid)
                 {
                     currentRow.Add(InlineKeyboardButton.WithCallbackData(
-                        isDayAvailable ? day.ToString() : "✖",
-                        isDayAvailable ? $"{DaySelectedCallback}{currentDay:yyyy-MM-dd}" : "day_unavailable"
-                    ));
+                        text: isDayAvailable ? day.ToString() : "✖",
+                        callbackData: (isDayAvailable
+                            ? new CalendarDayCallbackDto { Action = DaySelectedCallback, Date = DateOnly.FromDateTime(currentDay.Date)}
+                            : new CalendarDayCallbackDto { Action = "day_unavailable", Date = default })
+                            .ToString()
+                    ));    
                 }
                 else
                 {
-                    currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
+                    currentRow.Add(InlineKeyboardButton.WithCallbackData(
+                        text: " ",
+                        callbackData: new CalendarDayCallbackDto { Action = "empty_day", Date = default }.ToString()
+                     ));
                 }
 
                 if (currentRow.Count == 7)
@@ -218,7 +231,10 @@ namespace BeautyBot
             if (currentRow.Any())
             {
                 while (currentRow.Count < 7)
-                    currentRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_day"));
+                    currentRow.Add(InlineKeyboardButton.WithCallbackData(
+                        text: " ",
+                        callbackData: new CalendarDayCallbackDto { Action = "empty_day", Date = default }.ToString()
+                    ));
 
                 keyboardButtons.Add(currentRow);
             }
@@ -230,8 +246,12 @@ namespace BeautyBot
             if (displayMonth.Year > minDate.Year || (displayMonth.Year == minDate.Year && displayMonth.Month > minDate.Month))
             {
                 navigationRow.Add(InlineKeyboardButton.WithCallbackData(
-                    "<",
-                    $"{PrevMonthCallback}{displayMonth.AddMonths(-1):yyyy-MM-dd}"
+                    text: "<",
+                    callbackData: new CalendarMonthCallbackDto
+                    {
+                        Action = "prev_month",
+                        Month = displayMonth.AddMonths(-1).ToString("yyyy-MM-dd")
+                    }.ToString()
                 ));
             }
             else
@@ -240,8 +260,12 @@ namespace BeautyBot
             }
 
             navigationRow.Add(InlineKeyboardButton.WithCallbackData(
-                displayMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture),
-                "month_display_no_action"
+                text: displayMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture),
+                callbackData: new CalendarMonthCallbackDto
+                {
+                    Action = "month_display_no_action",
+                    Month = displayMonth.ToString("yyyy-MM-dd")
+                }.ToString()
             ));
 
             // Next month button (only if there are available days in the next month within the 60-day range)
@@ -252,18 +276,28 @@ namespace BeautyBot
                 if (nextMonthFirstDay <= maxDate)
                 {
                     navigationRow.Add(InlineKeyboardButton.WithCallbackData(
-                        ">",
-                        $"{NextMonthCallback}{displayMonth.AddMonths(1):yyyy-MM-dd}"
+                        text: ">",
+                        callbackData: new CalendarMonthCallbackDto
+                        {
+                            Action = "next_month",
+                            Month = displayMonth.AddMonths(1).ToString("yyyy-MM-dd")
+                        }.ToString()
                     ));
                 }
                 else
                 {
-                    navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
+                    navigationRow.Add(InlineKeyboardButton.WithCallbackData(
+                        text: " ",
+                        callbackData: new CalendarMonthCallbackDto { Action = "empty_button", Month = null }.ToString()
+                    ));
                 }
             }
             else
             {
-                navigationRow.Add(InlineKeyboardButton.WithCallbackData(" ", "empty_button")); // Placeholder for alignment
+                navigationRow.Add(InlineKeyboardButton.WithCallbackData(
+                    text: " ",
+                    callbackData: new CalendarMonthCallbackDto { Action = "empty_button", Month = null }.ToString()
+                ));
             }
 
             keyboardButtons.Add(navigationRow);
@@ -296,6 +330,59 @@ namespace BeautyBot
                 OneTimeKeyboard = true
             };
         }
+
+
+
+
+
+
+        //public static InlineKeyboardMarkup AppointmentListKeyboard(IReadOnlyList<Appointment> appointments)
+        //{
+        //    var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
+
+        //    // кнопки записей
+        //    ListInlineButtonGenerate(appointments, keyboardRows, "show");
+
+        //    //последний ряд кнопок
+        //    keyboardRows.Add(new[]
+        //    {
+        //        InlineKeyboardButton.WithCallbackData(text: "❌ Отменить", callbackData: "cancelappointment"),
+        //        InlineKeyboardButton.WithCallbackData(text: "➡️ Перенести", callbackData: "editappointment")
+        //    });
+
+        //    return new InlineKeyboardMarkup(keyboardRows);
+        //}
+
+
+        public static InlineKeyboardMarkup AppointmentListKeyboard(IReadOnlyList<Appointment> appointments)
+        {
+            var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
+
+            // кнопки записей
+            ListInlineButtonGenerate(appointments, keyboardRows, "show");
+
+            return new InlineKeyboardMarkup(keyboardRows);
+        }
+
+        /// <summary>
+        /// Генерирует кнопки с записями
+        /// </summary>
+        /// <param name="appointments">Коллекция записей</param>
+        /// <param name="keyboardRows">Список с кнопками</param>
+        /// <param name="action">Действие</param>
+        private static void ListInlineButtonGenerate(IReadOnlyList<Appointment> appointments, List<IEnumerable<InlineKeyboardButton>> keyboardRows, string action)
+        {
+            keyboardRows.AddRange(appointments.Select(appointment =>
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(
+                        text: Helper.FormatAppointmentString(appointment.Procedure, appointment.AppointmentDate),
+                        callbackData: new AppointmentCallbackDto { Action = action, AppointmentId = appointment.Id }.ToString()
+                    )
+                }
+            ));
+        }
+
 
     }
 }

@@ -1,5 +1,7 @@
 ﻿using BeautyBot.src.BeautyBot.Core.BaseClasses;
 using BeautyBot.src.BeautyBot.Core.Enums;
+using BeautyBot.src.BeautyBot.Domain.Entities;
+using System.Security.AccessControl;
 
 namespace BeautyBot.src.BeautyBot.Domain.Entities
 {
@@ -18,12 +20,11 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
             get { return _withRemove; }
             set { _withRemove = value; }
         }
-        public Pedicure(bool withRemove = true)
+        public Pedicure(PedicureType type, decimal price, int duration, bool withRemove = true)
         {
-            _withRemove = withRemove;
-        }
-        public Pedicure(string name, decimal price, PedicureType type, int duration, bool withRemove = true) : base(name, price, duration)
-        {
+            BaseType = ProcedureBaseType.Pedicure;
+            Price = price;
+            Duration = duration;
             Type = type;
             _withRemove = withRemove;
         }

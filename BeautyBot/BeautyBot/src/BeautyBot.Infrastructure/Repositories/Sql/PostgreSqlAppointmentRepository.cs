@@ -37,8 +37,6 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
                 .LoadWith(i => i.Procedure)
                 .ToListAsync(ct);
 
-            var с = AppointmentModelMapper.MapFromModel(appointmentModels[0]);
-
             var appointmentEntities = appointmentModels.Select(AppointmentModelMapper.MapFromModel).ToList();
 
             return appointmentEntities.ToList().AsReadOnly();
@@ -53,6 +51,9 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
             var appointmentModels = await dbContext.Appointments
                 .Where(x => x.User.UserId == userId && x.State == AppointmentState.Active)
+                .LoadWith(i => i.User)
+                .LoadWith(i => i.Procedure)
+                .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync(ct);
 
             var appointmentEntities = appointmentModels.Select(AppointmentModelMapper.MapFromModel).ToList();

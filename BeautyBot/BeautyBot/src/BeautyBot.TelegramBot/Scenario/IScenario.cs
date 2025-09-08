@@ -7,6 +7,6 @@ namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
     public interface IScenario
     {
         bool CanHandle(ScenarioType scenario);
-        Task<ScenarioResponse> HandleMessageAsync(ScenarioContext context, MessageData messageData, CancellationToken ct);
+        Task<ScenarioResponse> HandleMessageAsync(ScenarioContext context, BeautyBotUser user, Chat chat, CancellationToken ct);
     }
 }

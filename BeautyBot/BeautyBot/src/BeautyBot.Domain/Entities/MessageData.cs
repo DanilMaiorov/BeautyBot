@@ -14,7 +14,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
         }
 
         public Chat Chat { get; }
-        public string UserInput { get; }
+        public string UserInput { get; set; }
         public int MessageId { get; }
         public BeautyBotUser? User { get; }
         public long TelegramUserId { get; }

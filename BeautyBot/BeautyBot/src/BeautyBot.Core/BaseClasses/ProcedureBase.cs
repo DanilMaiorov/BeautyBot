@@ -9,16 +9,16 @@ namespace BeautyBot.src.BeautyBot.Core.BaseClasses
     public abstract class ProcedureBase : IProcedure //,IProcedureCost
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
+        public ProcedureBaseType BaseType { get; set; }
         public decimal Price { get; set; }
         public int Duration { get; set; }
         protected ProcedureBase()
         {
             Id = Guid.NewGuid();
         }
-        protected ProcedureBase(string name, decimal price, int duration) : this()
+        protected ProcedureBase(ProcedureBaseType baseType, decimal price, int duration) : this()
         {
-            Name = name;
+            BaseType = baseType;
             Price = price;
             Duration = duration;
         }

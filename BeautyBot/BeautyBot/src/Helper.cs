@@ -6,6 +6,7 @@ using Telegram.Bot;
 using System.Globalization;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Domain.Services;
+using BeautyBot.src.BeautyBot.Core.Interfaces;
 
 namespace BeautyBot.src
 {
@@ -74,9 +75,8 @@ namespace BeautyBot.src
         /// <param name="input">Ввод пользователя</param>
         /// <param name="currentUserAppointmentsList">Список записей юзера</param>
         /// <returns>Кортеж с данными по записи</returns>
-        public static (string, string, DateOnly) InputCheck(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        public static (string, string, DateOnly) NormalizeInput(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
         {
-            string cutInput = "";
             Guid taskGuid = Guid.Empty;
 
             string month = "";
@@ -127,11 +127,9 @@ namespace BeautyBot.src
                     inputLower = "/french";
                     break;
 
-
                 case "верно":
                     inputLower = "/approve";
                     break;
-
 
                 case "выбрать другое время":
                     inputLower = "/changetime";
@@ -140,20 +138,15 @@ namespace BeautyBot.src
                     inputLower = "/changedate";
                     break;
 
-
                 case "время":
                     inputLower = "/time";
                     break;
 
 
-
-
-
-
-                case string s when inputLower.StartsWith("day_selected_"):
-                    date = ParseDateFromString(inputLower);
-                    inputLower = "/date";
-                    break;
+                //case string s when inputLower.StartsWith("day_selected_"):
+                //    date = ParseDateFromString(inputLower);
+                //    inputLower = "/date";
+                //    break;
 
                 case string s when inputLower.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || inputLower.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase):
                     month = GetFormattedMonth(inputLower);
@@ -170,30 +163,25 @@ namespace BeautyBot.src
                 default:
                     break;
             }
+
             return (inputLower, month, date);
         }
 
-        public static bool ParseTimeFromString(string timeString)
+        public static string NormalizeProcedureTypeName(string input)
         {
-            return TimeOnly.TryParse(timeString, out _);
-        }
+            var lowerInput = input.ToLower();
 
-        public static DateOnly ParseDateFromString(string input)
-        {
-            int lastUnderscoreIndex = input.LastIndexOf('_');
-
-            if (lastUnderscoreIndex == -1 || lastUnderscoreIndex == input.Length - 1)
-                throw new ArgumentException("Invalid input format");
-
-            string dateString = input.Substring(lastUnderscoreIndex + 1);
-
-            if (DateOnly.TryParseExact(dateString, "yyyy-MM-dd",
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly result))
+            switch (lowerInput)
             {
-                return result;
+                case "гель-лак":
+                    return "GelPolish";
+                case "классический":
+                    return "Classic";
+                case "френч":
+                    return "French";
+                default:
+                    return input;
             }
-
-            throw new FormatException("Could not parse date from string");
         }
 
         public static string GetFormattedMonth(string callbackData)
@@ -245,7 +233,7 @@ namespace BeautyBot.src
             foreach (Appointment appointment in appointments)
             {
                 appointmentCounter++;
-                await botClient.SendMessage(chat, $"{appointmentCounter}) ({appointment.State}) {appointment.Procedure.Name} - {appointment.CreatedAt}, {appointment.Id}", cancellationToken: ct);
+                //await botClient.SendMessage(chat, $"{appointmentCounter}) ({appointment.State}) {appointment.Procedure.Name} - {appointment.CreatedAt}, {appointment.Id}", cancellationToken: ct);
 
                 //тут надо попробовать выводить запись вместе с кнопками разными сообщениями
                 //await botClient.SendMessage(chat, $"\n{appointment.Id}", ct);
@@ -333,15 +321,88 @@ namespace BeautyBot.src
             return await userService.GetUser(id, ct);
         }
 
-        public static string GetBaseProcedureName(object procedureType)
+        /// <summary>
+        /// Возвращает строковое представление подтипа процедуры на основе её фактического типа.
+        /// </summary>
+        /// <param name="entity">Объект IProcedure, чей подтип необходимо получить.</param>
+        /// <returns>Строковое представление типа процедуры (например, "French" или "Classic").</returns>
+        /// <exception cref="Exception">Выбрасывается, если тип процедуры неизвестен или не поддерживается.</exception>
+        public static string GetSubtypeName(IProcedure entity)
         {
-            if (procedureType is Manicure)
-                return Constants.Manicure;
-            
-            if (procedureType is Pedicure)
-                return Constants.Pedicure;
-            
+            if (entity is Manicure manicure)
+                return manicure.Type.ToString();
+
+            if (entity is Pedicure pedicure)
+                return pedicure.Type.ToString();
+
             throw new Exception("Неизвестный тип процедуры");
+        }
+
+        /// <summary>
+        /// Форматирует информацию о процедуре и дате/времени в читаемую строку на русском языке.
+        /// </summary>
+        /// <param name="procedure">Объект IProcedure, содержащий информацию о типе и подтипе процедуры.</param>
+        /// <param name="appointmentDateTime">Объект DateTime с датой и временем записи.</param>
+        /// <returns>Строка в формате "Базовый_Тип (Подтип) - День Месяц в Время", например, "Маникюр (френч) - 21 Сентябрь в 15:00".</returns>
+        public static string FormatAppointmentString(IProcedure procedure, DateTime appointmentDateTime)
+        {
+            string baseTypeName;
+
+            switch (procedure.BaseType)
+            {
+                case ProcedureBaseType.Manicure:
+                    baseTypeName = Constants.Manicure;
+                    break;
+                case ProcedureBaseType.Pedicure:
+                    baseTypeName = Constants.Manicure;
+                    break;
+                default:
+                    baseTypeName = procedure.BaseType.ToString();
+                    break;
+            }
+            string subtypeName = GetRussianSubtypeName(procedure);
+
+            string dateString = appointmentDateTime.ToString("dd.MM");
+
+            string timeString = appointmentDateTime.ToString("HH:mm");
+
+            //собираю итоговую строку
+            return $"{baseTypeName} ({subtypeName}) - {dateString} в {timeString}";
+        }
+
+        public static string GetRussianSubtypeName(IProcedure procedure)
+        {
+            switch (procedure)
+            {
+                case Manicure manicure:
+                    switch (manicure.Type)
+                    {
+                        case ManicureType.French:
+                            return Constants.FrenchManicure;
+                        case ManicureType.GelPolish:
+                            return Constants.GelPolishManicure;
+                        case ManicureType.Classic:
+                            return Constants.ClassicManicure;
+                        default:
+                            return manicure.Type.ToString();
+                    }
+
+                case Pedicure pedicure:
+                    switch (pedicure.Type)
+                    {
+                        case PedicureType.French:
+                            return Constants.FrenchPedicure;
+                        case PedicureType.GelPolish:
+                            return Constants.GelPolishPedicure;
+                        case PedicureType.Classic:
+                            return Constants.ClassicPedicure;
+                        default:
+                            return pedicure.Type.ToString();
+                    }
+
+                default:
+                    return string.Empty;
+            }
         }
     }
 }
