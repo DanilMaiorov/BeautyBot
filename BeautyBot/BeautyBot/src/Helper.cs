@@ -1,5 +1,4 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
-using System.Text;
 using BeautyBot.src.BeautyBot.Core.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot;
@@ -18,9 +17,6 @@ namespace BeautyBot.src
         public async static Task CommandsRender(ITelegramBotClient botClient, CancellationToken ct)
         {
             int counter = 0;
-
-            var builder = new StringBuilder();
-
             //команды бота
             var commands = new List<BotCommand>();
 
@@ -34,25 +30,12 @@ namespace BeautyBot.src
                 { Command.Show, "Показать текущие записи" },
             };
 
-            builder.AppendLine("Список доступных команд:");
-
             foreach (Command commandValue in Enum.GetValues(typeof(Command)))
             {
-                Command command = (Command)Enum.Parse(typeof(Command), commandValue.ToString());
-
                 string commandName = $"/{commandValue.ToString().ToLower()}";
 
                 if (commandDescriptions.TryGetValue(commandValue, out string? description))
-                {
-                    builder.AppendLine($"{++counter}) {commandName} - {description}");
-
                     commands.Add(new BotCommand { Command = commandName, Description = description });
-                }
-                else
-                {
-                    builder.AppendLine($"{++counter}) {commandName}");
-                    //commands.Add(new BotCommand { Command = commandName, Description = "" });
-                }
             }
 
             await botClient.SetMyCommands(commands, cancellationToken: ct);
