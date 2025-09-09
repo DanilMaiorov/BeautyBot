@@ -3,7 +3,6 @@ using System.Text;
 using BeautyBot.src.BeautyBot.Core.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot;
-using System.Globalization;
 using BeautyBot.src.BeautyBot.TelegramBot.Scenario;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using BeautyBot.src.BeautyBot.Core.Interfaces;
@@ -16,15 +15,14 @@ namespace BeautyBot.src
         /// Метод рендера списка команд
         /// </summary>
         /// <returns>Рендер списка в консоль (Телеграм)</returns>
-        public async static Task CommandsRender(Chat chat, ITelegramBotClient botClient, CancellationToken ct)
+        public async static Task CommandsRender(ITelegramBotClient botClient, CancellationToken ct)
         {
             int counter = 0;
 
-            //создам стрингБилдер для сборки в одно сообщение, а не пачки
             var builder = new StringBuilder();
 
             //команды бота
-            //var commands = new List<BotCommand>();
+            var commands = new List<BotCommand>();
 
             //заведу словарик для описания команд
             var commandDescriptions = new Dictionary<Command, string>()
@@ -32,21 +30,15 @@ namespace BeautyBot.src
                 { Command.Start, "Начало работы с ботом, регистрация" },
                 { Command.Help, "Помощь по командам" },
                 { Command.Info, "Информация о боте" },
-                //{ Command.AddAppointment, "Записаться на процедуру" },
-                //{ Command.Main, "Записаться на процедуру" },
-                { Command.Show, "Показать все записи" },
-                { Command.CancelAppointment, "Отменить запись" },
-                { Command.FindAppointment, "Найти запись" },
-                { Command.EditAppointment, "Изменить запись" },
-                { Command.Report, "Показать статистику записей" },
-                { Command.Exit, "Выйти" }
+                { Command.Create, "Записаться на процедуру" },
+                { Command.Show, "Показать текущие записи" },
             };
 
             builder.AppendLine("Список доступных команд:");
 
             foreach (Command commandValue in Enum.GetValues(typeof(Command)))
             {
-                //Command command = (Commands)Enum.Parse(typeof(Commands), commandValue.ToString());
+                Command command = (Command)Enum.Parse(typeof(Command), commandValue.ToString());
 
                 string commandName = $"/{commandValue.ToString().ToLower()}";
 
@@ -54,32 +46,25 @@ namespace BeautyBot.src
                 {
                     builder.AppendLine($"{++counter}) {commandName} - {description}");
 
-                    //commands.Add(new BotCommand { Command = commandName, Description = description });
+                    commands.Add(new BotCommand { Command = commandName, Description = description });
                 }
                 else
                 {
                     builder.AppendLine($"{++counter}) {commandName}");
-                    //commands.Add(new BotCommand { Command = commandName, Description = "" });
+                    commands.Add(new BotCommand { Command = commandName, Description = "" });
                 }
             }
 
-            await botClient.SendMessage(chat, builder.ToString(), cancellationToken: ct);
-
-            //рендерю менюшку
-            //await botClient.SetMyCommands(commands, cancellationToken: ct);
+            await botClient.SetMyCommands(commands, cancellationToken: ct);
         }
 
         /// <summary>
-        /// Метод форматирования ввода команды от пользователя /add, /removetask, /completetask, /find
+        /// Метод форматирования ввода команды от пользователя
         /// </summary>
         /// <param name="input">Ввод пользователя</param>
-        /// <param name="currentUserAppointmentsList">Список записей юзера</param>
-        /// <returns>Кортеж с данными по записи</returns>
-        public static (string, string, DateOnly) NormalizeInput(string input, IReadOnlyList<Appointment> currentUserAppointmentsList = null)
+        /// <returns>Форматированная строка</returns>
+        public static string NormalizeInput(string input)
         {
-            Guid taskGuid = Guid.Empty;
-
-            string month = "";
             DateOnly date = default;
 
             var inputLower = input.ToLower();
@@ -143,16 +128,6 @@ namespace BeautyBot.src
                     break;
 
 
-                //case string s when inputLower.StartsWith("day_selected_"):
-                //    date = ParseDateFromString(inputLower);
-                //    inputLower = "/date";
-                //    break;
-
-                case string s when inputLower.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) || inputLower.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase):
-                    month = GetFormattedMonth(inputLower);
-                    inputLower = "/changemonth";
-                    break;
-
                 case "empty_day":
                 case "month_display_no_action":
                 case "day_name_no_action":
@@ -164,9 +139,14 @@ namespace BeautyBot.src
                     break;
             }
 
-            return (inputLower, month, date);
+            return inputLower;
         }
 
+        /// <summary>
+        /// Нормализует название типа процедуры, преобразуя русскоязычные названия в английские идентификаторы.
+        /// </summary>
+        /// <param name="input">Входное название типа процедуры на русском языке.</param>
+        /// <returns>Английский идентификатор типа процедуры или исходное значение, если соответствие не найдено.</returns>
         public static string NormalizeProcedureTypeName(string input)
         {
             var lowerInput = input.ToLower();
@@ -181,62 +161,6 @@ namespace BeautyBot.src
                     return "French";
                 default:
                     return input;
-            }
-        }
-
-        public static string GetFormattedMonth(string callbackData)
-        {
-            if (!callbackData.StartsWith("prev_month_", StringComparison.OrdinalIgnoreCase) &&
-                !callbackData.StartsWith("next_month_", StringComparison.OrdinalIgnoreCase)
-                )
-            {
-                return "Неверный формат данных";
-            }
-
-            var dateFromCallback = callbackData.Split("_");
-
-            var formattedDate = "";
-
-            if (DateTime.TryParseExact(dateFromCallback[dateFromCallback.Length - 1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
-            {
-                switch (dateFromCallback[0])
-                {
-                    case "next":
-                    case "prev":
-                        formattedDate = date.ToString("MM", CultureInfo.CurrentCulture);
-                        break;
-                    default:
-                        break;
-                }
-
-                return formattedDate;
-            }
-            else
-            {
-                return "Ошибка парсинга даты";
-            }
-        }
-
-        /// <summary>
-        /// Метод рендера списка записей на процедуры
-        /// </summary>
-        /// <param name="appointments">Список записей пользователя</param>
-        /// <param name="botClient">Бот</param>
-        /// <param name="chat">Номер чата</param>
-        /// <param name="ct">Токен отмены</param>
-        public async static Task AppointmentsListRender(IReadOnlyList<Appointment> appointments, ITelegramBotClient botClient, Chat chat, CancellationToken ct)
-        {
-            int appointmentCounter = 0;
-
-            var builder = new StringBuilder();
-
-            foreach (Appointment appointment in appointments)
-            {
-                appointmentCounter++;
-                //await botClient.SendMessage(chat, $"{appointmentCounter}) ({appointment.State}) {appointment.Procedure.Name} - {appointment.CreatedAt}, {appointment.Id}", cancellationToken: ct);
-
-                //тут надо попробовать выводить запись вместе с кнопками разными сообщениями
-                //await botClient.SendMessage(chat, $"\n{appointment.Id}", ct);
             }
         }
 
@@ -346,20 +270,8 @@ namespace BeautyBot.src
         /// <returns>Строка в формате "Базовый_Тип (Подтип) - День Месяц в Время", например, "Маникюр (френч) - 21 Сентябрь в 15:00".</returns>
         public static string FormatAppointmentString(IProcedure procedure, DateTime appointmentDateTime)
         {
-            string baseTypeName;
+            string baseTypeName = GetRussianBaseTypeName(procedure);
 
-            switch (procedure.BaseType)
-            {
-                case ProcedureBaseType.Manicure:
-                    baseTypeName = Constants.Manicure;
-                    break;
-                case ProcedureBaseType.Pedicure:
-                    baseTypeName = Constants.Manicure;
-                    break;
-                default:
-                    baseTypeName = procedure.BaseType.ToString();
-                    break;
-            }
             string subtypeName = GetRussianSubtypeName(procedure);
 
             string dateString = appointmentDateTime.ToString("dd.MM");
@@ -370,6 +282,42 @@ namespace BeautyBot.src
             return $"{baseTypeName} ({subtypeName}) - {dateString} в {timeString}";
         }
 
+        /// <summary>
+        /// Форматирует детали записи в строку для отображения.
+        /// </summary>
+        /// <param name="appointment">Запись для форматирования.</param>
+        /// <returns>Строка с деталями записи.</returns>
+        public static string FormatAppointmentDetails(Appointment appointment)
+        {
+            return $"Детали записи:\n" +
+                   $"Процедура: {GetRussianBaseTypeName(appointment.Procedure) + ", " + GetRussianSubtypeName(appointment.Procedure)}\n" +
+                   $"Дата: {appointment.AppointmentDate:dd.MM.yyyy}\n" +
+                   $"Время: {appointment.AppointmentDate:HH:mm}";
+        }
+
+        /// <summary>
+        /// Возвращает строковое значение базового типа процедуры.
+        /// </summary>
+        /// <param name="procedure">Процедура для получения базового типа.</param>
+        /// <returns>Строковое представление базового типа процедуры.</returns>
+        public static string GetRussianBaseTypeName(IProcedure procedure)
+        {
+            switch (procedure.BaseType)
+            {
+                case ProcedureBaseType.Manicure:
+                    return Constants.Manicure;
+                case ProcedureBaseType.Pedicure:
+                    return Constants.Manicure; // Опечатка? Должно быть Constants.Pedicure?
+                default:
+                    return procedure.BaseType.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Возвращает русское название подтипа процедуры.
+        /// </summary>
+        /// <param name="procedure">Процедура для получения названия.</param>
+        /// <returns>Название подтипа на русском языке или пустая строка.</returns>
         public static string GetRussianSubtypeName(IProcedure procedure)
         {
             switch (procedure)

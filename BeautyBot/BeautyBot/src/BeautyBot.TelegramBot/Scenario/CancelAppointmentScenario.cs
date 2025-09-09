@@ -1,26 +1,12 @@
-﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
-using BeautyBot.src.BeautyBot.Domain.Entities;
+﻿using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Services;
 using BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BeautyBot.src.BeautyBot.TelegramBot.Scenario
 {
     public class CancelAppointmentScenario : IScenario
     {
-        private readonly IAppointmentService _appointmentService;
-        private readonly ISlotService _slotService;
-
-        private readonly PostgreSqlProcedureRepository _procedureRepository;
-
-        public CancelAppointmentScenario(IAppointmentService appointmentService, ISlotService slotService, PostgreSqlProcedureRepository procedureRepository)
-        {
-            _appointmentService = appointmentService;
-            _slotService = slotService;
-            _procedureRepository = procedureRepository;
-        }
-
         public bool CanHandle(ScenarioType scenario)
         {
             return scenario == ScenarioType.CancelAppointment;

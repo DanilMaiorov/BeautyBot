@@ -2,7 +2,6 @@
 using BeautyBot.src.BeautyBot.Core.DataAcess.Models;
 using LinqToDB;
 using LinqToDB.Data;
-using System;
 
 namespace BeautyBot.src.BeautyBot.Core.DataAcess.Database
 {
@@ -57,8 +56,7 @@ namespace BeautyBot.src.BeautyBot.Core.DataAcess.Database
             {
                 Console.WriteLine("Таблица Slots уже существует.");
             }
-            ;
-
+            
             try
             {
                 dbContext.Execute("ALTER TABLE \"Appointments\" ADD FOREIGN KEY (\"UserId\") REFERENCES \"Users\"(\"Id\");");

@@ -1,5 +1,4 @@
 ﻿using BeautyBot.src.BeautyBot.Core.Interfaces;
-using BeautyBot.src.BeautyBot.Domain.Entities;
 
 namespace BeautyBot.src.BeautyBot.Domain.Entities.Repositories
 {

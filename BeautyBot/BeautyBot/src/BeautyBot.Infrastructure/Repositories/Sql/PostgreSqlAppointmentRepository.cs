@@ -76,24 +76,25 @@ namespace BeautyBot.src.BeautyBot.Infrastructure.Repositories.InMemory
 
         public async Task UpdateAppointment(Appointment appointment, CancellationToken ct)
         {
-            //using var dbContext = _factory.CreateDataContext();
+            using var dbContext = _factory.CreateDataContext();
 
-            //var updateIndex = _appointments.FindIndex(x => x.Id == appointment.Id);
-
-            //if (updateIndex != -1)
-            //{
-            //    _appointments[updateIndex] = appointment;
-
-            //    //сделаю искусственную задержку для асинхронности
-            //    await Task.Delay(1, ct);
-            //}
-            //else
-            //{
-            //    throw new KeyNotFoundException($"Запись с номером {appointment.Id} не найдена");
-            //}
+            await dbContext.Appointments
+                .Where(a => a.Id == appointment.Id)
+                .Set(a => a.AppointmentDate, appointment.AppointmentDate)
+                .Set(a => a.StateChangedAt, DateTime.Now)
+                .UpdateAsync(ct);
         }
 
-        //тут продолжить
+        public async Task EditAppointment(Appointment appointment, CancellationToken ct)
+        {
+            using var dbContext = _factory.CreateDataContext();
+
+            await dbContext.Appointments
+                .Where(a => a.Id == appointment.Id)
+                .Set(a => a.AppointmentDate, appointment.AppointmentDate)
+                .UpdateAsync(ct);
+        }
+
         public async Task CancelAppointment(Guid appointmentId, CancellationToken ct)
         {
             using var dbContext = _factory.CreateDataContext();

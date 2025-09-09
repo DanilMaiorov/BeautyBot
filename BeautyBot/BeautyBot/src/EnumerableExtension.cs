@@ -1,6 +1,4 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Entities;
-
-namespace NailBot.Helpers
+﻿namespace BeautyBot.src
 {
     public static class EnumerableExtension
     {

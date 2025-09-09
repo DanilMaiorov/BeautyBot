@@ -11,6 +11,7 @@ namespace BeautyBot.src.BeautyBot.Domain.Services
         Task<Appointment> AddAppointment(BeautyBotUser user, IProcedure procedure, DateOnly date, TimeOnly time, CancellationToken ct);
         Task CancelAppointment(Guid appointmentId, CancellationToken ct);
         Task UpdateAppointment(Guid appointmentId, AppointmentState state, CancellationToken ct);
+        Task EditAppointment(Guid appointmentId, DateTime date, CancellationToken ct);
         Task<Appointment> GetAppointment(Guid appointmentId, CancellationToken ct);
     }
 }

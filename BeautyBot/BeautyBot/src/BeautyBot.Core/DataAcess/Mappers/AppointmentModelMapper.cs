@@ -1,6 +1,4 @@
 ﻿using BeautyBot.src.BeautyBot.Core.DataAcess.Models;
-using BeautyBot.src.BeautyBot.Core.Enums;
-using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 
 namespace BeautyBot.src.BeautyBot.Core.DataAcess.Mappers

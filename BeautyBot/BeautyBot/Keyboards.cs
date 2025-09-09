@@ -1,14 +1,8 @@
 ﻿using BeautyBot.src;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.TelegramBot.Dtos;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BeautyBot
 {
@@ -331,7 +325,7 @@ namespace BeautyBot
             };
         }
 
-        public static InlineKeyboardMarkup AppointmentListKeyboard(Appointment appointment)
+        public static InlineKeyboardMarkup AppointmentItemKeyboard(Appointment appointment)
         {
             var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
 
@@ -355,16 +349,30 @@ namespace BeautyBot
             return new InlineKeyboardMarkup(keyboardRows);
         }
 
+        public static InlineKeyboardMarkup AppointmentEditItemKeyboard(Appointment appointment)
+        {
+            var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
 
-        //public static InlineKeyboardMarkup AppointmentListKeyboard(IReadOnlyList<Appointment> appointments)
-        //{
-        //    var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
+            //последний ряд кнопок
+            keyboardRows.Add(new[]
+            {
+                InlineKeyboardButton.WithCallbackData(
+                    text: "Перенести дату и время",
+                    callbackData: new AppointmentCallbackDto { Action = "change_date", AppointmentId = appointment.Id }.ToString()),
+                InlineKeyboardButton.WithCallbackData(
+                    text: "Перенести время",
+                    callbackData: new AppointmentCallbackDto { Action = "change_time", AppointmentId = appointment.Id }.ToString())
+            });
+            keyboardRows.Add(new[]
+{
+                InlineKeyboardButton.WithCallbackData(
+                    text: "↩️ Назад к списку",
+                    callbackData: new PagedListCallbackDto { Action = "list_appointments", Page = 0 }.ToString())
+            });
 
-        //    // кнопки записей
-        //    ListInlineButtonGenerate(appointments, keyboardRows, "show_ap");
+            return new InlineKeyboardMarkup(keyboardRows);
+        }
 
-        //    return new InlineKeyboardMarkup(keyboardRows);
-        //}
 
         /// <summary>
         /// Генерирует кнопки с записями
@@ -384,7 +392,6 @@ namespace BeautyBot
                 }
             ));
         }
-
 
 
         public static void GetAppointmentListKeyboardWithPagination(

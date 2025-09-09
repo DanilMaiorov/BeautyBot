@@ -20,7 +20,6 @@ namespace BeautyBot
             string connectionString = Environment.GetEnvironmentVariable("ConnectionStringPostgreSQL_BeautyBot", EnvironmentVariableTarget.User);
             string providerName = ProviderName.PostgreSQL;
 
-
             if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(connectionString))
             {
                 if (string.IsNullOrEmpty(botToken))
@@ -72,7 +71,9 @@ namespace BeautyBot
             IEnumerable<IScenario> _scenarios = new List<IScenario>
             {
                 new AddAppointmentScenario(_appointmentService, _slotService, procedureRepository),
-                new CancelAppointmentScenario(_appointmentService, _slotService, procedureRepository),
+                new CancelAppointmentScenario(),
+
+                new EditAppointmentScenario(_appointmentService, _slotService, procedureRepository),
             };
 
             IUpdateHandler _updateHandler = new UpdateHandler(

@@ -50,13 +50,13 @@ namespace BeautyBot.src
                     var manicureType = Helper.GetEnumValueOrDefault<ManicureType>(normalizedInput);
                     if (manicureType == ManicureType.None)
                         throw new ArgumentException("Неверный тип маникюра");
-                    return ProcedureFactory.CreateProcedure(ProcedureBaseType.Manicure, manicureType);
+                    return CreateProcedure(ProcedureBaseType.Manicure, manicureType);
 
                 case "Педикюр":
                     var pedicureType = Helper.GetEnumValueOrDefault<PedicureType>(normalizedInput);
                     if (pedicureType == PedicureType.None)
                         throw new ArgumentException("Неверный тип педикюра");
-                    return ProcedureFactory.CreateProcedure(ProcedureBaseType.Pedicure, pedicureType);
+                    return CreateProcedure(ProcedureBaseType.Pedicure, pedicureType);
 
                 default:
                     throw new ArgumentException("Неизвестный тип базовой процедуры");

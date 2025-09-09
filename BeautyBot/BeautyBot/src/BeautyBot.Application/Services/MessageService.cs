@@ -1,6 +1,4 @@
-﻿using BeautyBot.src.BeautyBot.Domain.Entities;
-using BeautyBot.src.BeautyBot.Domain.Services;
-using System;
+﻿using BeautyBot.src.BeautyBot.Domain.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;

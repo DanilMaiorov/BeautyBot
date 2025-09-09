@@ -1,5 +1,4 @@
 ﻿using BeautyBot.src.BeautyBot.Domain.Entities;
-using Telegram.Bot.Types;
 
 namespace BeautyBot.src.BeautyBot.Domain.Services
 {

@@ -1,5 +1,4 @@
-﻿using BeautyBot.src.BeautyBot.Core.Enums;
-using LinqToDB.Mapping;
+﻿using LinqToDB.Mapping;
 
 namespace BeautyBot.src.BeautyBot.Core.DataAcess.Models
 {

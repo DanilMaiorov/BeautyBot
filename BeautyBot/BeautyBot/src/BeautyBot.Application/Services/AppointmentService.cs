@@ -3,7 +3,6 @@ using BeautyBot.src.BeautyBot.Core.Interfaces;
 using BeautyBot.src.BeautyBot.Domain.Entities;
 using BeautyBot.src.BeautyBot.Domain.Entities.Repositories;
 using BeautyBot.src.BeautyBot.Domain.Services;
-using Telegram.Bot.Types;
 
 namespace BeautyBot.src.BeautyBot.Application.Services
 {
@@ -49,6 +48,15 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             udpateAppointment.StateChangedAt = DateTime.Now;
 
             await _appointmentRepository.UpdateAppointment(udpateAppointment, ct);
+        }
+
+        public async Task EditAppointment(Guid appointmentId, DateTime date, CancellationToken ct)
+        {
+            var editAppointment = await _appointmentRepository.GetAppointment(appointmentId, ct);
+
+            editAppointment.AppointmentDate = date;
+
+            await _appointmentRepository.UpdateAppointment(editAppointment, ct);
         }
 
         public async Task CancelAppointment(Guid appointmentId, CancellationToken ct)

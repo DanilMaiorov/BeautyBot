@@ -34,7 +34,6 @@ namespace BeautyBot.src.BeautyBot.Application.Services
 
         public async Task GenerateYearlySlots(CancellationToken ct)
         {
-            // Проверяем, есть ли уже слоты в базе данных через репозиторий
             if (await _slotRepository.AnySlotsExist())
                 return;
 
@@ -73,38 +72,14 @@ namespace BeautyBot.src.BeautyBot.Application.Services
             );
         }
 
-        //public async Task<Dictionary<TimeOnly, bool>> GetSlots(DateOnly date, CancellationToken ct)
-        //{
-        //    return await _slotRepository.GetCurrentDayTimeSlots(date, ct);
-        //}
-
-        //public async Task<Dictionary<TimeOnly, Appointment>> GetCurrentDayAvailableTimeSlots(DateOnly date, CancellationToken ct)
-        //{
-        //    //await GetUnavailableDaySlots(date, ct);
-        //    return await _slotRepository.GetCurrentDayAvailableTimeSlots(date, ct);
-        //}
-
-
-        //public async Task<List<DateOnly>> GetUnavailableDaySlots(CancellationToken ct)
-        //{
-        //    return await _slotRepository.GetUnavailableDaySlots(ct);
-        //}
-
-
-        //public async Task UpdateSlot(Appointment appointment, CancellationToken ct)
-        //{
-        //    await _slotRepository.UpdateSlot(appointment, ct);
-        //}
-
-        //public async Task<List<DateOnly>> GetAvailableDaySlots(CancellationToken ct)
-        //{
-        //    return await _slotRepository.GetAvailableDaySlots(ct);
-        //}
-
-
-        //private async Task GetUnavailableDays()
-        //{
-        //    var days = await _slotRepository.GetAllDaySlots();
-        //}
+        public async Task ResetSlotFromAppointment(Appointment appointment, CancellationToken ct)
+        {
+            await _slotRepository.ResetSlot(
+                DateOnly.FromDateTime(appointment.AppointmentDate),
+                TimeOnly.FromDateTime(appointment.AppointmentDate),
+                appointment.Id,
+                ct
+            );
+        }
     }   
 }

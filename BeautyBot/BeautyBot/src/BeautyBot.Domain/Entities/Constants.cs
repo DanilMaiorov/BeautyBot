@@ -1,6 +1,4 @@
-﻿using BeautyBot.src.BeautyBot.Application.Models;
-
-namespace BeautyBot.src.BeautyBot.Domain.Entities
+﻿namespace BeautyBot.src.BeautyBot.Domain.Entities
 {
     public static class Constants
     {
@@ -31,9 +29,6 @@ namespace BeautyBot.src.BeautyBot.Domain.Entities
 
         public const string ClassicManicure = "классический";
         public const string ClassicPedicure = "классический";
-        //public const string Back = "Назад";
-        //public const string Back = "Назад";
-        //public const string Back = "Назад";
     }
 }
 

@@ -9,42 +9,24 @@
         Help,
         Info,
         Show,
-
-        //AddAppointment,
-
-        Del,
-
-        //AddAppointment,
-
         CancelAppointment,
         FindAppointment,
         EditAppointment,
         UpdateAppointment,
         Report,
-        Exit,
-
-
         Create,
-
         Cancel,
-
         Manicure,
         Pedicure,
         Classic,
         GelPolish,
         French,
-
-
-
         Back,
         Date,
         Time,
-
-
         ChangeMonth,
         ChangeDate,
         ChangeTime,
-
         Approve
     }
 }
