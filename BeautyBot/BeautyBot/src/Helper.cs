@@ -51,7 +51,7 @@ namespace BeautyBot.src
                 else
                 {
                     builder.AppendLine($"{++counter}) {commandName}");
-                    commands.Add(new BotCommand { Command = commandName, Description = "" });
+                    //commands.Add(new BotCommand { Command = commandName, Description = "" });
                 }
             }
 
