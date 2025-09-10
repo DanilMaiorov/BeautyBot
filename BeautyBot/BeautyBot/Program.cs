@@ -43,28 +43,22 @@ namespace BeautyBot
 
             //Инициализация БД
             DatabaseInitializer databaseInitializer = new DatabaseInitializer(factory);
-
             databaseInitializer.Initialize();
 
 
             IUserRepository userRepository = new PostgreSqlUserRepository(factory);
             ISlotRepository slotRepository = new PostgreSqlSlotRepository(factory);
             IAppointmentRepository appointmentRepository = new PostgreSqlAppointmentRepository(factory);
+            PostgreSqlProcedureRepository procedureRepository = new PostgreSqlProcedureRepository(factory);
 
             IUserService _userService = new UserService(userRepository);
             ISlotService _slotService = new SlotService(slotRepository);
-
             IMessageService _messageService = new MessageService(botClient);
-
-            PostgreSqlProcedureRepository procedureRepository = new PostgreSqlProcedureRepository(factory);
 
             //Задача написать фичу, которая продлевает количество слотов
             await _slotService.GenerateYearlySlots(cts.Token);
 
             IAppointmentService _appointmentService = new AppointmentService(appointmentRepository);
-
-            //добавить сервис для отчета
-            //IToDoReportService _toDoReportService = new ToDoReportService(toDoRepository);
 
             //логика сценариев
             IScenarioContextRepository _contextRepository = new InMemoryScenarioContextRepository();
@@ -72,7 +66,6 @@ namespace BeautyBot
             {
                 new AddAppointmentScenario(_appointmentService, _slotService, procedureRepository),
                 new CancelAppointmentScenario(),
-
                 new EditAppointmentScenario(_appointmentService, _slotService, procedureRepository),
             };
 
@@ -80,14 +73,10 @@ namespace BeautyBot
                 _userService,
                 _appointmentService,
                 procedureRepository,
-
                 _slotService,
-
                 _messageService,
-
                 _scenarios,
                 _contextRepository,
-
                 cts.Token);
 
             if (_updateHandler is UpdateHandler castHandler)
